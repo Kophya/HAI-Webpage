@@ -1,0 +1,26 @@
+# System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python cache and virtualenvs
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# Local configuration / IDEs
+.vscode/
+.idea/
+*.suo
+*.user
+*.sln
+*.swp
+
+# Temporary test/runner outputs
+*.log
+*.tmp

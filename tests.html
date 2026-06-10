@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HAI Webpage Layout - Automated Test Suite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-card: #1e293b;
+      --border-color: #334155;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --color-success: #10b981;
+      --color-fail: #ef4444;
+      --color-accent: #3b82f6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Outfit', sans-serif;
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      background: rgba(30, 41, 59, 0.85);
+      border-bottom: 2px solid var(--border-color);
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      backdrop-filter: blur(8px);
+      z-index: 100;
+    }
+
+    .title-block h1 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.025em;
+    }
+
+    .title-block p {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .control-block {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.9rem;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .btn-run {
+      background: var(--color-accent);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-run:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Left panel: Test cases list */
+    .test-panel {
+      border-right: 2px solid var(--border-color);
+      padding: 24px;
+      overflow-y: auto;
+      background: rgba(15, 23, 42, 0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      min-height: 0; /* Fix CSS Grid content overflow scroll trap */
+    }
+
+    .status-summary {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      text-align: center;
+    }
+
+    .summary-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .summary-val {
+      font-size: 1.6rem;
+      font-weight: 800;
+    }
+
+    .summary-lbl {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+
+    .status-total { color: var(--text-primary); }
+    .status-pass { color: var(--color-success); }
+    .status-fail { color: var(--color-fail); }
+
+    .test-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .test-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .test-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .test-name {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--text-primary);
+    }
+
+    .test-badge {
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+
+    .badge-pending {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-secondary);
+    }
+
+    .badge-running {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--color-accent);
+      animation: pulsate 1.5s infinite;
+    }
+
+    .badge-pass {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--color-success);
+    }
+
+    .badge-fail {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--color-fail);
+    }
+
+    .test-error {
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: #fda4af;
+      background: rgba(239, 68, 68, 0.08);
+      padding: 8px;
+      border-radius: 6px;
+      border-left: 3px solid var(--color-fail);
+      overflow-x: auto;
+      margin-top: 4px;
+      display: none;
+    }
+
+    .test-time {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      align-self: flex-end;
+    }
+
+    /* Right panel: Application frame wrapper */
+    .preview-panel {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow: hidden;
+    }
+
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .preview-label {
+      font-weight: 700;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .preview-badge {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--color-success);
+      animation: pulsate 1.5s infinite;
+    }
+
+    .frame-container {
+      flex: 1;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    @keyframes pulsate {
+      0% { opacity: 0.4; }
+      50% { opacity: 1; }
+      100% { opacity: 0.4; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- CORS / PROTOCOL WARNING BANNER -->
+  <div id="protocol-warning" style="display: none; background: var(--color-fail); color: #fff; padding: 14px 28px; text-align: center; font-weight: 700; font-size: 0.95rem; z-index: 1000; position: relative; border-bottom: 2px solid rgba(0,0,0,0.1); line-height: 1.4;">
+    ⚠️ CORS Security Block: You opened this page by double-clicking the file (file:// protocol). Browsers block local file iframe access for security. Please open the tests through your local server instead: <a href="http://localhost:8080/tests.html" style="color: #fff; text-decoration: underline; font-weight: 800; margin-left: 5px;">http://localhost:8080/tests.html</a> (or http://192.168.1.208:8080/tests.html).
+  </div>
+
+  <!-- HEADER -->
+  <header>
+    <div class="title-block">
+      <h1>HAI Reservation Webpage - Automated Test Suite</h1>
+      <p>Continuous integration unit and browser integration testing</p>
+    </div>
+    <div class="control-block">
+      <button class="btn btn-run" id="btn-run-tests">Run Diagnostics</button>
+    </div>
+  </header>
+
+  <!-- DASHBOARD CONTAINER -->
+  <div class="dashboard">
+    
+    <!-- LEFT PANEL: TEST LIST -->
+    <div class="test-panel">
+      
+      <!-- Summary stats -->
+      <div class="status-summary">
+        <div class="summary-item">
+          <span class="summary-val status-total" id="stat-total">0</span>
+          <span class="summary-lbl">Total</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-val status-pass" id="stat-pass">0</span>
+          <span class="summary-lbl">Passed</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-val status-fail" id="stat-fail">0</span>
+          <span class="summary-lbl">Failed</span>
+        </div>
+      </div>
+
+      <!-- Test Cases -->
+      <div class="test-list" id="test-list-container">
+        <!-- Rendered dynamically -->
+      </div>
+
+    </div>
+
+    <!-- RIGHT PANEL: SANDBOX IFRAME PREVIEW -->
+    <div class="preview-panel">
+      <div class="preview-header">
+        <span class="preview-label">
+          <div class="preview-badge"></div>
+          Iframe Testing Sandbox (Visual Observer)
+        </span>
+      </div>
+      <div class="frame-container">
+        <iframe id="app-frame" src="index.html"></iframe>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const iframe = document.getElementById('app-frame');
+    const runBtn = document.getElementById('btn-run-tests');
+    const listContainer = document.getElementById('test-list-container');
+    
+    const stats = {
+      total: document.getElementById('stat-total'),
+      pass: document.getElementById('stat-pass'),
+      fail: document.getElementById('stat-fail')
+    };
+
+    // Helper assertions
+    function assert(condition, message) {
+      if (!condition) {
+        throw new Error(message || "Assertion failed");
+      }
+    }
+
+    // App DOM context accessor
+    function getApp() {
+      const win = iframe.contentWindow;
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      return { win, doc };
+    }
+
+    // Reload app to guarantee clean state
+    function reloadApp() {
+      return new Promise((resolve) => {
+        // Clear local storage to prevent test contamination between runs
+        localStorage.removeItem('hai_booth_bookings');
+        
+        iframe.onload = () => {
+          // Brief timeout to let JS load and draw initial SVG layout
+          setTimeout(resolve, 300);
+        };
+        iframe.src = 'index.html';
+      });
+    }
+
+    // Test definitions
+    const testCases = [
+      {
+        id: "booth-db",
+        name: "Booths Database config integrity",
+        fn: async () => {
+          const { win } = getApp();
+          assert(win.CONFIG, "CONFIG object is not declared in app.js");
+          assert(win.CONFIG.booths.length === 59, `Expected 59 total booths in configuration database, got ${win.CONFIG.booths.length}`);
+          
+          // Check for unique IDs
+          const ids = win.CONFIG.booths.map(b => b.id);
+          const uniqueIds = new Set(ids);
+          assert(ids.length === uniqueIds.size, `Config has duplicate booth IDs! Array length: ${ids.length}, unique count: ${uniqueIds.size}`);
+          
+          // Check category mappings
+          const validCategories = ["General", "Food", "Boba", "Fruits", "Info"];
+          win.CONFIG.booths.forEach(booth => {
+            assert(validCategories.includes(booth.category), `Invalid category "${booth.category}" on booth #${booth.id}`);
+          });
+        }
+      },
+      {
+        id: "pricing-rules",
+        name: "Booths pricing rules consistency",
+        fn: async () => {
+          const { win } = getApp();
+          const categories = win.CONFIG.categories;
+          
+          assert(categories.Food.depositPrice === 1000 && categories.Food.fullPrice === 1500, "Food pricing does not match specs ($1000 Dep / $1500 Full)");
+          assert(categories.Boba.depositPrice === 500 && categories.Boba.fullPrice === 750, "Boba pricing does not match specs ($500 Dep / $750 Full)");
+          assert(categories.General.depositPrice === 350 && categories.General.fullPrice === 350, "General pricing does not match specs ($350 Full)");
+          assert(categories.Fruits.depositPrice === 350 && categories.Fruits.fullPrice === 350, "Fruits pricing does not match specs ($350 Full)");
+        }
+      },
+      {
+        id: "booth-selection",
+        name: "Interactive booth selection click",
+        fn: async () => {
+          const { win, doc } = getApp();
+          
+          // Simulate selecting booth 2 (General)
+          const rect = doc.querySelector('rect.svg-booth[x="506"]'); // Booth 2 config coordinates
+          assert(rect !== null, "Could not locate Booth 2 SVG rectangle in the DOM");
+          
+          rect.dispatchEvent(new MouseEvent('click'));
+          
+          assert(win.selectedBooth !== null, "App state selectedBooth remains null after click");
+          assert(win.selectedBooth.id === "2", `Expected booth ID 2, got ${win.selectedBooth.id}`);
+          
+          // Verify Checkout Panel State
+          assert(doc.getElementById('checkout-empty').style.display === "none", "Checkout empty state panel is still visible");
+          assert(doc.getElementById('checkout-active').style.display !== "none", "Checkout active form panel remains hidden");
+          
+          // General booth is fixed price, verify dual options block is hidden
+          assert(doc.getElementById('payment-options-block').style.display === "none", "General booth should not show payment deposit/full selectors");
+          assert(doc.getElementById('fixed-price-block').style.display !== "none", "General booth should display fixed-price-block");
+          assert(doc.getElementById('disp-fixed-price').textContent === "$350", "Fixed price text should equal $350");
+        }
+      },
+      {
+        id: "form-validation",
+        name: "Form invalid values validation",
+        fn: async () => {
+          const { win, doc } = getApp();
+          
+          // Select a booth first to show panel
+          const rect = doc.querySelector('rect.svg-booth[x="506"]');
+          rect.dispatchEvent(new MouseEvent('click'));
+          
+          // Initial form is blank, validation should fail
+          const val1 = win.validateForm();
+          assert(val1.valid === false, "Form validation succeeded on blank fields");
+          assert(val1.errors.includes("Contact Full Name"), "Validation did not flag empty Contact Name");
+          assert(val1.errors.includes("Email Address"), "Validation did not flag empty Email Address");
+          
+          // Fill invalid email
+          win.elements.inputName.value = "John Doe";
+          win.elements.inputEmail.value = "invalid-email-string";
+          win.elements.inputPhone.value = "123-456-7890";
+          win.elements.inputBusiness.value = "Test Merchandise Co.";
+          
+          const val2 = win.validateForm();
+          assert(val2.valid === false, "Form validation succeeded on malformed email format");
+          assert(val2.errors.some(e => e.includes("valid email format")), "Validation did not flag email checkValidity format check");
+          
+          // Correct email
+          win.elements.inputEmail.value = "johndoe@example.com";
+          const val3 = win.validateForm();
+          assert(val3.valid === true, "Form validation failed on correct field values");
+        }
+      },
+      {
+        id: "mock-booking",
+        name: "End-to-End Test booking process",
+        fn: async () => {
+          const { win, doc } = getApp();
+          
+          // Clear localStorage so we have a clean test
+          win.localStorage.removeItem('hai_booth_bookings');
+          win.loadReservations();
+          win.renderMap();
+          
+          // Select Booth 3 (General)
+          const rect = doc.querySelector('rect.svg-booth[x="534"]'); // Booth 3 config coordinates
+          assert(rect !== null, "Could not locate Booth 3 SVG rectangle");
+          rect.dispatchEvent(new MouseEvent('click'));
+          
+          // Populate form fields
+          win.elements.inputName.value = "Tester Bob";
+          win.elements.inputEmail.value = "bob@test.com";
+          win.elements.inputPhone.value = "555-555-5555";
+          win.elements.inputBusiness.value = "Bob's Crafts LLC";
+          
+          // Trigger skip payment bypass click
+          const bypassBtn = doc.getElementById('btn-test-bypass');
+          assert(bypassBtn !== null, "Could not find Skip Payment button in DOM");
+          bypassBtn.dispatchEvent(new MouseEvent('click'));
+          
+          // Verify Receipt modal is active
+          const receiptModal = doc.getElementById('modal-receipt');
+          assert(receiptModal.classList.contains('active'), "Receipt modal failed to open after booking completion");
+          
+          // Verify receipt contents
+          assert(doc.getElementById('rec-business').textContent === "Bob's Crafts LLC", "Receipt did not map business name correctly");
+          assert(doc.getElementById('rec-booth-id').textContent === "#3", "Receipt did not map booth number correctly");
+          assert(doc.getElementById('rec-total-paid').textContent === "$350", "Receipt did not map payment amount correctly");
+          
+          // Verify localStorage storage
+          const bookings = JSON.parse(win.localStorage.getItem('hai_booth_bookings'));
+          assert(bookings !== null, "Bookings failed to write to browser localStorage");
+          assert(bookings["3"] !== undefined, "Booth #3 reservation was not saved in local reservations mapping");
+          assert(bookings["3"].name === "Tester Bob", "Local storage booking data is corrupted");
+        }
+      },
+      {
+        id: "zoom-clamps",
+        name: "Zoom constraints range clamping",
+        fn: async () => {
+          const { win, doc } = getApp();
+          
+          // Initial zoom 100% (1.0)
+          assert(win.currentZoom === 1.0, "Initial zoom level should be 1.0");
+          
+          const btnIn = doc.getElementById('btn-zoom-in');
+          const btnOut = doc.getElementById('btn-zoom-out');
+          
+          // Zoom in repeatedly
+          for (let i = 0; i < 15; i++) {
+            btnIn.dispatchEvent(new MouseEvent('click'));
+          }
+          // Max zoom clamp is 2.5
+          assert(win.currentZoom === 2.5, `Zoom in failed to clamp at 2.5, went to ${win.currentZoom}`);
+          
+          // Zoom out repeatedly
+          for (let i = 0; i < 20; i++) {
+            btnOut.dispatchEvent(new MouseEvent('click'));
+          }
+          // Min zoom clamp is 0.5
+          assert(win.currentZoom === 0.5, `Zoom out failed to clamp at 0.5, went to ${win.currentZoom}`);
+        }
+      },
+      {
+        id: "desktop-layout-win-lin",
+        name: "Windows/Linux Desktop Layout compatibility (1280px)",
+        fn: async () => {
+          const { doc } = getApp();
+          
+          // Size iframe to standard desktop view
+          iframe.style.width = "1280px";
+          iframe.style.height = "800px";
+          iframe.style.maxWidth = "none";
+          iframe.style.maxHeight = "none";
+          
+          // Trigger layout resize event
+          iframe.contentWindow.dispatchEvent(new Event('resize'));
+          await new Promise(r => setTimeout(r, 200)); // wait for layout repaint
+          
+          const map = doc.querySelector('.map-workspace').getBoundingClientRect();
+          const sidebar = doc.querySelector('.sidebar-checkout').getBoundingClientRect();
+          const location = doc.querySelector('.location-container').getBoundingClientRect();
+          
+          // Check side-by-side positioning
+          assert(map.right <= sidebar.left + 5, `Expected Map Workspace on left of Checkout Sidebar on Desktop. Map right: ${map.right}, Sidebar left: ${sidebar.left}`);
+          
+          // Check location map card is placed below the fold (below main viewport container)
+          const appContainer = doc.querySelector('.app-container').getBoundingClientRect();
+          assert(location.top >= appContainer.bottom - 5, `Expected Event Location Card to sit below the fold on desktop. Location top: ${location.top}, Main bottom: ${appContainer.bottom}`);
+        }
+      },
+      {
+        id: "mobile-layout-ios",
+        name: "iOS Mobile Safari Layout & gesture compatibility (375px)",
+        fn: async () => {
+          const { doc } = getApp();
+          
+          // Resize sandbox to standard iOS iPhone portrait width
+          iframe.style.width = "375px";
+          iframe.style.height = "667px";
+          iframe.style.maxWidth = "100%";
+          iframe.style.maxHeight = "100%";
+          
+          iframe.contentWindow.dispatchEvent(new Event('resize'));
+          await new Promise(r => setTimeout(r, 200)); // wait for layout repaint
+          
+          const map = doc.querySelector('.map-workspace').getBoundingClientRect();
+          const sidebar = doc.querySelector('.sidebar-checkout').getBoundingClientRect();
+          const location = doc.querySelector('.location-container').getBoundingClientRect();
+          
+          // Check vertical stacking sequence: Map on top, Sidebar in middle, Location card at bottom
+          assert(map.bottom <= sidebar.top + 5, `Expected Map Workspace above Checkout Sidebar. Map bottom: ${map.bottom}, Sidebar top: ${sidebar.top}`);
+          assert(sidebar.bottom <= location.top + 5, `Expected Checkout Sidebar above Location Card. Sidebar bottom: ${sidebar.bottom}, Location top: ${location.top}`);
+          
+          // Verify viewport meta tag exists (critical for mobile Safari layout scaling)
+          const metaViewport = doc.querySelector('meta[name="viewport"]');
+          assert(metaViewport !== null, "Viewport meta tag is missing (required for iOS scaling compatibility)");
+          assert(metaViewport.getAttribute('content').includes('width=device-width'), "Viewport meta tag does not contain device-width initialization");
+          
+          // Verify SVG canvas contains pinch zoom listeners
+          const canvas = doc.getElementById('canvas-container');
+          assert(canvas !== null, "Interactive SVG canvas container was not found");
+        }
+      },
+      {
+        id: "mobile-layout-android",
+        name: "Android Mobile Chrome Layout & viewport compatibility (412px)",
+        fn: async () => {
+          const { doc } = getApp();
+          
+          // Resize sandbox to standard Android Galaxy portrait width
+          iframe.style.width = "412px";
+          iframe.style.height = "915px";
+          iframe.style.maxWidth = "100%";
+          iframe.style.maxHeight = "100%";
+          
+          iframe.contentWindow.dispatchEvent(new Event('resize'));
+          await new Promise(r => setTimeout(r, 200)); // wait for layout repaint
+          
+          const map = doc.querySelector('.map-workspace').getBoundingClientRect();
+          const sidebar = doc.querySelector('.sidebar-checkout').getBoundingClientRect();
+          const location = doc.querySelector('.location-container').getBoundingClientRect();
+          
+          // Check vertical stacking sequence on Android
+          assert(map.bottom <= sidebar.top + 5, `Expected Map Workspace above Checkout Sidebar on Android. Map bottom: ${map.bottom}, Sidebar top: ${sidebar.top}`);
+          assert(sidebar.bottom <= location.top + 5, `Expected Checkout Sidebar above Location Card on Android. Sidebar bottom: ${sidebar.bottom}, Location top: ${location.top}`);
+        }
+      }
+    ];
+
+    // Initialize list of test cases in UI
+    function initUI() {
+      listContainer.innerHTML = '';
+      stats.total.textContent = testCases.length;
+      stats.pass.textContent = 0;
+      stats.fail.textContent = 0;
+
+      testCases.forEach(tc => {
+        const card = document.createElement('div');
+        card.className = 'test-card';
+        card.id = `tc-${tc.id}`;
+        card.innerHTML = `
+          <div class="test-header">
+            <span class="test-name">${tc.name}</span>
+            <span class="test-badge badge-pending" id="badge-${tc.id}">Pending</span>
+          </div>
+          <div class="test-error" id="err-${tc.id}"></div>
+          <span class="test-time" id="time-${tc.id}">-- ms</span>
+        `;
+        listContainer.appendChild(card);
+      });
+    }
+
+    // Run tests
+    async function runDiagnostics() {
+      runBtn.disabled = true;
+      runBtn.textContent = 'Testing...';
+      initUI();
+
+      let passedCount = 0;
+      let failedCount = 0;
+      const results = [];
+
+      for (const tc of testCases) {
+        const badge = document.getElementById(`badge-${tc.id}`);
+        const errBlock = document.getElementById(`err-${tc.id}`);
+        const timeBlock = document.getElementById(`time-${tc.id}`);
+
+        badge.textContent = 'Running';
+        badge.className = 'test-badge badge-running';
+
+        // Reset app state
+        await reloadApp();
+
+        const start = performance.now();
+        let passed = false;
+        let errMsg = null;
+        let errStack = null;
+        try {
+          await tc.fn();
+          const duration = Math.round(performance.now() - start);
+          
+          badge.textContent = 'Pass';
+          badge.className = 'test-badge badge-pass';
+          timeBlock.textContent = `${duration} ms`;
+          passedCount++;
+          stats.pass.textContent = passedCount;
+          passed = true;
+          results.push({ id: tc.id, name: tc.name, passed: true, duration });
+        } catch (err) {
+          const duration = Math.round(performance.now() - start);
+          console.error(err);
+          
+          badge.textContent = 'Fail';
+          badge.className = 'test-badge badge-fail';
+          errBlock.textContent = err.message + "\n\nStack:\n" + err.stack;
+          errBlock.style.display = 'block';
+          timeBlock.textContent = `${duration} ms`;
+          failedCount++;
+          stats.fail.textContent = failedCount;
+          passed = false;
+          errMsg = err.message;
+          errStack = err.stack;
+          results.push({ id: tc.id, name: tc.name, passed: false, error: errMsg, stack: errStack, duration });
+        }
+      }
+
+      // Reset sandbox size at the end of all tests
+      iframe.style.width = "100%";
+      iframe.style.height = "100%";
+      iframe.style.maxWidth = "100%";
+      iframe.style.maxHeight = "100%";
+      if (iframe.contentWindow) {
+        iframe.contentWindow.dispatchEvent(new Event('resize'));
+      }
+
+      runBtn.disabled = false;
+      runBtn.textContent = 'Run Diagnostics';
+
+      // Auto-submit if auto query param is active
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('auto') === 'true') {
+        try {
+          await fetch('/submit-results', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ results, passed: failedCount === 0 })
+          });
+        } catch (e) {
+          console.error("Failed to submit results", e);
+        }
+      }
+    }
+
+    // Event listener
+    runBtn.addEventListener('click', runDiagnostics);
+
+    // Initial setup on page load
+    window.addEventListener('load', () => {
+      initUI();
+      if (window.location.protocol === 'file:') {
+        document.getElementById('protocol-warning').style.display = 'block';
+        // Disable Run button to prevent confusing failures
+        runBtn.disabled = true;
+        runBtn.style.opacity = '0.5';
+        runBtn.style.cursor = 'not-allowed';
+        runBtn.title = 'Please use the local server http://localhost:8080/tests.html to run tests.';
+      } else {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('auto') === 'true') {
+          // Auto run
+          runDiagnostics();
+        }
+      }
+    });
+  </script>
+</body>
+</html>

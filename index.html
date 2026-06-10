@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hmong Association, Inc (Arkansas) - Vendor Booth Reservations</title>
+  <meta name="description" content="Securely reserve and pay for vendor booths for Hmong Association, Inc (Arkansas) merchandise/vendors layout events.">
+  
+  <!-- Modern Fonts from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- PAGE HEADER -->
+  <header>
+    <div class="brand">
+      <!-- Logo Placeholder - Swap with <img> to customize -->
+      <div class="logo-placeholder" id="brand-logo">
+        HAI
+      </div>
+      <div class="brand-text">
+        <h1 id="brand-title">Hmong Association, Inc</h1>
+        <p id="brand-subtitle">Arkansas Merchandise/Vendors Layout & Reservations</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <!-- Admin / Reset local bookings cache (useful for testing) -->
+      <button class="btn-secondary" id="btn-reset-cache" title="Reset all reservations back to default (local testing only)">
+        Reset Map
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="app-container">
+    
+    <!-- LEFT SIDE: MAP WORKSPACE -->
+    <section class="map-workspace" aria-label="Interactive Layout Map">
+      
+      <!-- Interactive Legend -->
+      <div class="legend-card">
+        <div class="legend-items">
+          <div class="legend-item" title="General Merchant/Marchise booths ($350)">
+            <div class="legend-color color-general"></div>
+            <span>General ($350)</span>
+          </div>
+          <div class="legend-item" title="Hot Food/Cooking booths ($1,000 Deposit / $1,500 Full)">
+            <div class="legend-color color-food"></div>
+            <span>Food ($1,000 / $1,500)</span>
+          </div>
+          <div class="legend-item" title="Boba/Specialty Drinks booths ($500 Deposit / $750 Full)">
+            <div class="legend-color color-boba"></div>
+            <span>Boba ($500 / $750)</span>
+          </div>
+          <div class="legend-item" title="Fruits booths ($350)">
+            <div class="legend-color color-fruits"></div>
+            <span>Fruits ($350)</span>
+          </div>
+          <div class="legend-item" title="Information & Non-profit booths (Organization Use Only)">
+            <div class="legend-color color-info"></div>
+            <span>Info (Org Use)</span>
+          </div>
+          <div class="legend-item" title="Booths already reserved by organizer or other vendors">
+            <div class="legend-color color-reserved"></div>
+            <span>Reserved/Sold</span>
+          </div>
+        </div>
+        
+        <!-- Selection Hint -->
+        <div class="legend-item" style="margin-left: auto;">
+          <div class="legend-color color-selected"></div>
+          <span style="font-weight: 600; color: #fff;">Selected</span>
+        </div>
+      </div>
+
+      <!-- Map Board Wrapper -->
+      <div class="map-board-wrapper">
+        
+        <!-- Interactive Canvas Wrapper (keeps aspect ratio and contains underlay + SVG) -->
+        <div class="map-canvas-wrapper" id="canvas-container-wrapper">
+          
+          <!-- Google Maps Satellite View Underlay -->
+          <div class="map-underlay" id="map-underlay">
+            <!-- 
+              TO UPDATE THE VENUE MAP LOCATION:
+              1. Go to Google Maps (maps.google.com).
+              2. Search for your venue location.
+              3. Switch to Satellite View.
+              4. Click Share -> Embed a Map -> Copy HTML.
+              5. Paste the src URL of the iframe into the src attribute below.
+              6. Add "&maptype=satellite" to the end of the src URL to force satellite mode.
+            -->
+            <iframe 
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3280.932454656111!2d-92.28945419999999!3d34.744747!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x87d2bb7ff7f9999f%3A0xc480749d012431cf!2sArkansas%20State%20Capitol!5e1!3m2!1sen!2sus!4v1717972000000&maptype=satellite&gestureHandling=none" 
+              width="100%" 
+              height="100%" 
+              style="border:0;" 
+              allowfullscreen="" 
+              loading="lazy" 
+              referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
+          </div>
+
+          <!-- Scrollable Visual Canvas (SVG Overlay) -->
+          <div class="map-container" id="canvas-container">
+            <!-- SVG Layout Map is dynamically rendered here by app.js -->
+          </div>
+
+        </div>
+
+        <!-- Floating Zoom Controls -->
+        <div class="zoom-controls">
+          <button class="zoom-btn" id="btn-zoom-in" type="button" title="Zoom In">＋</button>
+          <span class="zoom-level" id="zoom-level-text">100%</span>
+          <button class="zoom-btn" id="btn-zoom-out" type="button" title="Zoom Out">－</button>
+          <button class="zoom-btn" id="btn-zoom-reset" type="button" title="Reset Zoom">⟲</button>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- RIGHT SIDE: CHECKOUT SIDEBAR -->
+    <aside class="sidebar-checkout" aria-label="Booth Reservation Checkout">
+      <div class="checkout-title">
+        <h2>Reserve Spot</h2>
+        <p>Select an available booth on the layout to begin</p>
+      </div>
+
+      <!-- State 1: No booth selected -->
+      <div class="checkout-empty-state" id="checkout-empty">
+        <div class="checkout-empty-icon">📍</div>
+        <p>Click on any light-colored booth (white, peach, green, blue) on the floor map to configure your registration.</p>
+      </div>
+
+      <!-- State 2: Booth selected -->
+      <div class="checkout-active-state" id="checkout-active" style="display: none;">
+        
+        <!-- Booth details display -->
+        <div class="details-card">
+          <div class="details-row">
+            <span class="details-label">Selected Booth</span>
+            <span class="details-value" id="disp-booth-id" style="font-size: 1.25rem; color: var(--color-booth-selected);">#--</span>
+          </div>
+          <div class="details-row">
+            <span class="details-label">Category</span>
+            <span class="badge" id="disp-booth-category" style="background: rgba(255,255,255,0.1);">--</span>
+          </div>
+          <div class="details-row">
+            <span class="details-label">Dimensions</span>
+            <span class="details-value" id="disp-booth-dimensions">20' x 30'</span>
+          </div>
+        </div>
+
+        <!-- Payment option selector (For Food and Boba where Deposit != Full) -->
+        <div class="payment-type-selector" id="payment-options-block">
+          <span class="payment-type-label">Select Payment Amount</span>
+          <div class="payment-options">
+            <!-- Option A: Deposit -->
+            <button class="payment-option-btn selected" id="btn-pay-deposit" type="button">
+              <span class="payment-option-title">Pay Deposit</span>
+              <span class="payment-option-price" id="price-deposit">$0</span>
+            </button>
+            <!-- Option B: Full Registration -->
+            <button class="payment-option-btn" id="btn-pay-full" type="button">
+              <span class="payment-option-title">Full Registration</span>
+              <span class="payment-option-price" id="price-full">$0</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Fixed Price Display (For General and Fruits where Deposit = Full) -->
+        <div class="payment-type-selector" id="fixed-price-block" style="display: none;">
+          <span class="payment-type-label">Registration Fee</span>
+          <div class="payment-option-btn selected" style="cursor: default; width: 100%; align-items: center; padding: 14px;">
+            <span class="payment-option-title" style="color: var(--color-primary-hover); font-size: 0.8rem; font-weight: 700;">Full Registration Fee</span>
+            <span class="payment-option-price" id="disp-fixed-price" style="font-size: 1.3rem; font-weight: 800; margin-top: 4px;">$0</span>
+          </div>
+        </div>
+
+        <!-- Customer Form details -->
+        <form class="booking-form" id="form-booking" onsubmit="return false;">
+          <div class="form-group">
+            <label for="input-name">Contact Full Name *</label>
+            <input type="text" id="input-name" class="form-control" placeholder="John Doe" required>
+          </div>
+          <div class="form-group">
+            <label for="input-email">Email Address *</label>
+            <input type="email" id="input-email" class="form-control" placeholder="johndoe@example.com" required>
+          </div>
+          <div class="form-group">
+            <label for="input-phone">Phone Number *</label>
+            <input type="tel" id="input-phone" class="form-control" placeholder="(555) 000-0000" required>
+          </div>
+          <div class="form-group">
+            <label for="input-business">Business / Vendor Name *</label>
+            <input type="text" id="input-business" class="form-control" placeholder="ABC Merchandise Co." required>
+          </div>
+
+          <!-- PayPal checkout integration container -->
+          <div class="form-group" style="margin-top: 10px;">
+            <label>Payment Method</label>
+            <div id="paypal-button-container"></div>
+          </div>
+
+          <!-- Sandbox Test mode bypass button -->
+          <button class="test-bypass-btn" id="btn-test-bypass" type="button">
+            ⚡ Skip Payment (Test Booking)
+          </button>
+        </form>
+
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- EVENT LOCATION SECTION -->
+  <div class="location-container">
+    <div class="location-card" id="location-map-card">
+      <div class="location-header">
+        <span class="location-icon">🗺️</span>
+        <div class="location-title">
+          <h3>Event Location & Venue Directions</h3>
+          <p>View the venue location on Google Maps / Satellite view</p>
+        </div>
+      </div>
+      <div class="location-map-wrapper">
+        <!-- 
+          TO INTEGRATE GOOGLE MAPS/EARTH LATER:
+          1. Go to maps.google.com and search for your venue location.
+          2. Click "Share" -> Select "Embed a map" tab.
+          3. Copy the HTML <iframe> tag.
+          4. Replace the placeholder div block below (<div class="map-placeholder">...</div>) with your copied <iframe> tag.
+          5. Ensure the iframe has: width="100%" height="250" style="border:0;" loading="lazy"
+        -->
+        <div class="map-placeholder">
+          <span class="map-placeholder-icon">📍</span>
+          <p style="font-weight: 700; font-size: 0.95rem; color: var(--text-primary);">Google Maps / Google Earth Satellite View Placeholder</p>
+          <span class="map-placeholder-hint">To display your real venue location map, open index.html and paste your Google Maps iframe code inside the "location-map-wrapper" container.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECEIPT MODAL OVERLAY -->
+  <div class="modal-overlay" id="modal-receipt">
+    <div class="receipt-modal">
+      <div class="receipt-header">
+        <div class="receipt-success-badge">✓</div>
+        <h3 class="receipt-title">Payment Successful!</h3>
+        <p class="receipt-subtitle">Your booth reservation has been confirmed</p>
+      </div>
+      
+      <div class="receipt-content">
+        <!-- Vendor info -->
+        <div>
+          <div class="receipt-sec-title">Registrant Info</div>
+          <div class="receipt-grid" style="margin-top: 8px;">
+            <div class="receipt-row">
+              <span class="receipt-label">Vendor Name</span>
+              <span class="receipt-value" id="rec-business">--</span>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-label">Contact Person</span>
+              <span class="receipt-value" id="rec-name">--</span>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-label">Email</span>
+              <span class="receipt-value" id="rec-email">--</span>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-label">Phone</span>
+              <span class="receipt-value" id="rec-phone">--</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reservation info -->
+        <div>
+          <div class="receipt-sec-title">Booth Details</div>
+          <div class="receipt-grid" style="margin-top: 8px;">
+            <div class="receipt-row">
+              <span class="receipt-label">Reserved Booth</span>
+              <span class="receipt-value" id="rec-booth-id" style="color: var(--color-primary-hover); font-weight: 700;">#--</span>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-label">Category</span>
+              <span class="receipt-value" id="rec-booth-category">--</span>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-label">Dimensions</span>
+              <span class="receipt-value" id="rec-booth-dimensions">--</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transaction details -->
+        <div>
+          <div class="receipt-sec-title">Transaction Details</div>
+          <div class="receipt-grid" style="margin-top: 8px;">
+            <div class="receipt-row">
+              <span class="receipt-label">Payment Mode</span>
+              <span class="receipt-value" id="rec-pay-mode">--</span>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-label">Transaction ID</span>
+              <span class="receipt-value" id="rec-transaction-id" style="font-family: monospace;">PAYID-XXXXXX</span>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-label">Date & Time</span>
+              <span class="receipt-value" id="rec-date">--</span>
+            </div>
+          </div>
+          
+          <div class="receipt-total-card">
+            <span class="receipt-total-label">Amount Paid</span>
+            <span class="receipt-total-val" id="rec-total-paid">$0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Receipt Actions -->
+      <div class="receipt-footer">
+        <button class="receipt-btn-print" id="btn-print-receipt">🖨 Print / Save PDF</button>
+        <button class="receipt-btn-close" id="btn-close-receipt">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dynamic Tooltip -->
+  <div class="map-tooltip" id="map-tooltip">
+    <strong id="tip-title">#--</strong>
+    <span id="tip-desc">Category</span>
+    <span id="tip-price" style="font-weight: 600; color: #a855f7;">$0.00</span>
+  </div>
+
+  <!-- PayPal JavaScript SDK (v5) -->
+  <!-- Note: Standard Sandbox Client ID = "test" is imported. This is secure and enables the sandbox portal popup -->
+  <script src="https://www.paypal.com/sdk/js?client-id=test&currency=USD"></script>
+  
+  <!-- Application JS Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
