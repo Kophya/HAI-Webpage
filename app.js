@@ -149,6 +149,406 @@ let localReservations = {};     // Map of booked booths from localStorage
 const PRERESERVED_IDS = ["2", "3", "12", "28", "33", "47", "48", "49", "50", "53", "55", "57", "57A"]; // Booths pre-reserved by the organizer
 let currentZoom = 1.0;          // Floor plan zoom level (1.0 = 100%)
 
+let currentLang = 'en';         // Active language: 'en' or 'hm'
+
+const TRANSLATIONS = {
+  en: {
+    brand_title: "Hmong Association, Inc",
+    brand_subtitle: "Arkansas Merchandise/Vendors Layout & Reservations",
+    scale_note: "(Note: Dimensions and layout are not to scale)",
+    btn_admin_dashboard: "🔑 Admin Dashboard",
+    btn_reset_cache: "Reset Map",
+    
+    // Legend
+    legend_general: "General ($350)",
+    legend_food: "Food ($1,000 / $1,500)",
+    legend_boba: "Boba ($500 / $750)",
+    legend_fruits: "Fruits ($500)",
+    legend_info: "Info (Org Use)",
+    legend_reserved: "Reserved/Sold",
+    legend_selected: "Selected",
+    
+    // Sidebar/Checkout
+    sidebar_title: "Reserve Spot",
+    sidebar_subtitle: "Select an available booth on the layout to begin",
+    checkout_empty_hint: "Click on any light-colored booth (white, peach, green, blue) on the floor map to configure your registration.",
+    label_selected_booth: "Selected Booth",
+    label_category: "Category",
+    label_dimensions: "Dimensions",
+    label_payment_amount: "Select Payment Amount",
+    payment_option_deposit: "Pay Deposit",
+    payment_option_full: "Full Registration",
+    payment_fixed_title: "Registration Fee",
+    payment_fixed_full: "Full Registration Fee",
+    
+    // Form Labels & Placeholders
+    label_contact_name: "Contact Full Name *",
+    placeholder_name: "John Doe",
+    label_email: "Email Address *",
+    placeholder_email: "johndoe@example.com",
+    label_phone: "Phone Number *",
+    placeholder_phone: "(555) 000-0000",
+    label_business: "Business / Vendor Name *",
+    placeholder_business: "ABC Merchandise Co.",
+    label_payment_method: "Payment Method",
+    btn_bypass_test: "⚡ Skip Payment (Test Booking)",
+    link_lookup_prefix: "Already reserved?",
+    link_lookup_action: "Look Up / Pay Balance",
+    
+    // Location
+    location_directions_title: "Event Location & Venue Directions",
+    location_directions_subtitle: "View the venue location on Google Maps / Satellite view",
+    location_address: "Address:",
+    btn_directions: "🚗 Get Directions",
+    btn_open_gmaps: "🌐 Open in Google Maps",
+    
+    // Receipt Modal
+    receipt_title: "Payment Successful!",
+    receipt_subtitle: "Your booth reservation has been confirmed",
+    receipt_sec_registrant: "Registrant Info",
+    receipt_label_vendor: "Vendor Name",
+    receipt_label_contact: "Contact Person",
+    receipt_label_email: "Email",
+    receipt_label_phone: "Phone",
+    receipt_sec_booth: "Booth Details",
+    receipt_label_booth: "Reserved Booth",
+    receipt_label_category: "Category",
+    receipt_label_dimensions: "Dimensions",
+    receipt_sec_transaction: "Transaction Details",
+    receipt_label_pay_mode: "Payment Mode",
+    receipt_label_txid: "Transaction ID",
+    receipt_label_date: "Date & Time",
+    receipt_label_amount_paid: "Amount Paid",
+    btn_print_receipt: "🖨 Print / Save PDF",
+    btn_close: "Close",
+    
+    // Bookkeeping/Admin Logbook
+    admin_title: "Bookkeeping Reservation Logbook",
+    admin_subtitle: "View, print, and export all active booth reservations logged in Supabase",
+    admin_label_total: "Total Reservations",
+    admin_label_revenue: "Total Revenue Collected",
+    admin_label_db: "Database Status",
+    admin_db_connected: "Connected",
+    admin_placeholder_search: "Search by Business, Contact Name, Booth ID, or Transaction ID...",
+    admin_th_booth: "Booth #",
+    admin_th_business: "Business / Vendor",
+    admin_th_contact: "Contact Name",
+    admin_th_email: "Email Address",
+    admin_th_phone: "Phone Number",
+    admin_th_price: "Price Paid",
+    admin_th_mode: "Payment Mode",
+    admin_th_date: "Date & Time",
+    admin_th_txid: "Transaction ID",
+    admin_empty: "No bookings matching your search query were found.",
+    btn_admin_export: "📥 Export to Excel (CSV)",
+    btn_admin_print: "🖨 Print Logbook",
+    btn_admin_close: "Close",
+    
+    // Lookup Modal
+    lookup_title: "Look Up Reservation",
+    lookup_subtitle: "Search by registered email and transaction ID to pay remaining balance",
+    lookup_label_email: "Registered Email Address *",
+    lookup_label_txid: "Original Transaction ID *",
+    lookup_placeholder_txid: "MOCK-PAY-XXXXXX or PAYID-XXXXXX",
+    btn_lookup_search: "Search Reservation",
+    lookup_searching: "Searching database...",
+    lookup_error: "❌ No reservation matching those details was found. Please check your spelling and try again.",
+    lookup_sec_title: "Reservation Details",
+    lookup_res_business: "Business / Vendor",
+    lookup_res_contact: "Contact Person",
+    lookup_res_booth: "Reserved Booth",
+    lookup_res_category: "Booth Category",
+    lookup_res_paid: "Amount Paid Already",
+    lookup_res_status: "Status",
+    lookup_status_deposit: "Deposit Paid",
+    lookup_status_paid: "Fully Paid",
+    lookup_balance_due_label: "Balance Due:",
+    lookup_balance_note: "You previously paid the deposit. The remaining registration balance must be paid to secure your reserved booth.",
+    lookup_label_payment_method: "Select Payment Method",
+    btn_bypass_balance: "⚡ Skip Payment (Test Balance Payment)",
+    lookup_success_title: "Payment Successful!",
+    lookup_success_msg: "Your remaining balance has been paid in full and your reservation has been updated to **Fully Paid**. Thank you!",
+    btn_lookup_close: "Close",
+    
+    // Dynamic Categories & Map labels
+    cat_general: "General Merchandise",
+    cat_food: "Food Vendor",
+    cat_boba: "Boba/Specialty Drink",
+    cat_fruits: "Fruits Vendor",
+    cat_info: "Information / Non-profit",
+    cat_reserved: "Reserved by Organizer",
+    
+    landmark_central_tent: "Central Tent (50' x 100')",
+    landmark_building: "Building (50' x 120')",
+    landmark_office: "Office",
+    landmark_storage: "Storage",
+    landmark_pavilion: "Pavilion",
+    landmark_dumpster: "Dumpster",
+    landmark_fence: "FENCE",
+    landmark_main_gate: "From Main Gate",
+    landmark_sports_field_arrow: "To the Sports Field",
+    compass_north: "NORTH",
+    compass_east: "EAST",
+    compass_south: "SOUTH",
+    compass_west: "WEST",
+    compass_sport_fields: "(sport fields)",
+    
+    // Alert & Dynamic status texts
+    alert_correct_fields: "Please correct the following fields before proceeding:",
+    alert_paypal_error: "PayPal failed to process. Ensure you are using Sandbox details, or use Skip Payment (Test Mode) to test.",
+    alert_paypal_error_balance: "PayPal failed to process. Try again or use Skip Payment (Test Mode).",
+    error_email_format: "Email Address (must be a valid email format, e.g. name@example.com)",
+    status_deposit: "Deposit Paid ($",
+    status_fully_paid: "Fully Paid"
+  },
+  hm: {
+    brand_title: "Koom Txoos Hmoob, Inc",
+    brand_subtitle: "Arkansas Kev Sau Npe & Ceev Cov Chaw Muag Khoom",
+    scale_note: "(Faj seeb: Cov chaw ntsuas tsis yog raws nraim li qhov tseeb)",
+    btn_admin_dashboard: "🔑 Tswj Xyuas Chaw",
+    btn_reset_cache: "Rov Pib Map Tshiab",
+    
+    // Legend
+    legend_general: "Khoom Muag ($350)",
+    legend_food: "Zaub Mov ($1,000 / $1,500)",
+    legend_boba: "Dej Qab Zib Boba ($500 / $750)",
+    legend_fruits: "Txiv Hnyev / Txiv Ntoo ($500)",
+    legend_info: "Chaw Qhia Ntawv",
+    legend_reserved: "Ceev Lawm / Muag Lawm",
+    legend_selected: "Xaiv Tseg",
+    
+    // Sidebar/Checkout
+    sidebar_title: "Ceev Ib Qho Chaw",
+    sidebar_subtitle: "Xaiv ib lub chaw dawb hauv daim duab mus pib",
+    checkout_empty_hint: "Nyem rau ntawm lub chaw dawb (xim dawb, xim duav, xim ntsuab, xim xiav) hauv daim duab mus sau npe ceev chaw.",
+    label_selected_booth: "Lub Chaw Xaiv Tseg",
+    label_category: "Hom Chaw",
+    label_dimensions: "Qhov Loj (Ntsuas)",
+    label_payment_amount: "Xaiv Tus Nqi Them Nyiaj",
+    payment_option_deposit: "Them Nyiaj Ceev (Deposit)",
+    payment_option_full: "Them Tag Nrho (Full)",
+    payment_fixed_title: "Tus Nqi Sau Npe",
+    payment_fixed_full: "Tus Nqi Them Tag Nrho",
+    
+    // Form Labels & Placeholders
+    label_contact_name: "Hais Npe Tag Nrho *",
+    placeholder_name: "John Doe (Npe)",
+    label_email: "Chaw Nyob Email *",
+    placeholder_email: "johndoe@example.com (Email)",
+    label_phone: "Tus Xov Tooj *",
+    placeholder_phone: "(555) 000-0000 (Xov tooj)",
+    label_business: "Lub Npe Lag Luam / Tus Muag Khoom *",
+    placeholder_business: "Lag luam / Lub koom haum",
+    label_payment_method: "Thev Naus Them Nyiaj",
+    btn_bypass_test: "⚡ Skip Payment (Kuaj Ceev Chaw)",
+    link_lookup_prefix: "Puas tau ceev lawm?",
+    link_lookup_action: "Nrhiav Chaw / Them Nqe Tshuav",
+    
+    // Location
+    location_directions_title: "Chaw Nyob Ntawm Koom Txoos & Kev Mus",
+    location_directions_subtitle: "Saib qhov chaw ntawm Google Maps / Duab Satellite",
+    location_address: "Chaw Nyob:",
+    btn_directions: "🚗 Nrhiav Kev Mus",
+    btn_open_gmaps: "🌐 Qhib rau Google Maps",
+    
+    // Receipt Modal
+    receipt_title: "Them Nyiaj Tau Lawm!",
+    receipt_subtitle: "Koj lub chaw ceev tau tso cai thiab paub tseeb lawm",
+    receipt_sec_registrant: "Tus Neeg Sau Npe",
+    receipt_label_vendor: "Vendor/Lag Luam",
+    receipt_label_contact: "Tus Neeg Hais",
+    receipt_label_email: "Email",
+    receipt_label_phone: "Xov Tooj",
+    receipt_sec_booth: "Booth Paub Ntsiab",
+    receipt_label_booth: "Chaw Ceev Tau",
+    receipt_label_category: "Hom Chaw",
+    receipt_label_dimensions: "Ntsuas Kev Loj",
+    receipt_sec_transaction: "Txoj Kev Them Nyiaj",
+    receipt_label_pay_mode: "Thev Naus Them",
+    receipt_label_txid: "Tus ID Them Nyiaj",
+    receipt_label_date: "Hnub & Sij Hawm",
+    receipt_label_amount_paid: "Tus Nyiaj Them Lawm",
+    btn_print_receipt: "🖨 Luam Ntawv / Khaws PDF",
+    btn_close: "Kaw",
+    
+    // Bookkeeping/Admin Logbook
+    admin_title: "Daim Ntawv Tswj Xyuas Cov Chaw Ceev",
+    admin_subtitle: "Saib, luam ntawv, thiab rub tawm cov chaw ceev hauv Supabase",
+    admin_label_total: "Tag Nrho Chaw Ceev",
+    admin_label_revenue: "Tag Nrho Nyiaj Sau Tau",
+    admin_label_db: "Chaw Khaws Nyiaj Txuas",
+    admin_db_connected: "Txuas Lawm",
+    admin_placeholder_search: "Nrhiav raws li Lub Npe, Tus Hais, Tus Booth, lossis Tus ID...",
+    admin_th_booth: "Booth #",
+    admin_th_business: "Lag Luam / Tus Muag",
+    admin_th_contact: "Neeg Hais",
+    admin_th_email: "Email",
+    admin_th_phone: "Xov Tooj",
+    admin_th_price: "Nqi Them",
+    admin_th_mode: "Thev Naus Them",
+    admin_th_date: "Hnub & Sij Hawm",
+    admin_th_txid: "Tus ID Them Nyiaj",
+    admin_empty: "Tsis pom kev ceev chaw twg raws li koj nrhiav.",
+    btn_admin_export: "📥 Rub tawm Excel (CSV)",
+    btn_admin_print: "🖨 Luam Ntawv Tswj Xyuas",
+    btn_admin_close: "Kaw",
+    
+    // Lookup Modal
+    lookup_title: "Nrhiav Kev Ceev Chaw",
+    lookup_subtitle: "Nrhiav raws email sau npe thiab tus ID them nyiaj txhawm rau them nqe tshuav",
+    lookup_label_email: "Email Sau Npe *",
+    lookup_label_txid: "Tus ID Them Nyiaj Ua Ntej *",
+    lookup_placeholder_txid: "MOCK-PAY-XXXXXX lossis PAYID-XXXXXX",
+    btn_lookup_search: "Nrhiav Qhov Ceev Chaw",
+    lookup_searching: "Tab tom nrhiav hauv database...",
+    lookup_error: "❌ Tsis pom muaj chaw ceev raws li cov ntsiab lus saum toj no. Thov xyuas kom zoo thiab sim dua.",
+    lookup_sec_title: "Ntsiab Lus Ceev Chaw",
+    lookup_res_business: "Lag Luam / Tus Muag",
+    lookup_res_contact: "Tus Neeg Hais",
+    lookup_res_booth: "Chaw Ceev Tau",
+    lookup_res_category: "Hom Chaw",
+    lookup_res_paid: "Tus Nyiaj Them Lawm",
+    lookup_res_status: "Qhov Txheej Txheem",
+    lookup_status_deposit: "Them Ceev Lawm",
+    lookup_status_paid: "Them Tag Nrho Lawm",
+    lookup_balance_due_label: "Nqe Tshuav:",
+    lookup_balance_note: "Koj tau them qhov ceev (deposit) ua ntej lawm. Koj yuav tsum them tus nqi tshuav kom tiav thiaj ceev tau koj lub booth.",
+    lookup_label_payment_method: "Xaiv Cov Kev Them Nyiaj",
+    btn_bypass_balance: "⚡ Hla Kev Them Nyiaj (Kuaj Them Nqe Tshuav)",
+    lookup_success_title: "Them Nyiaj Tau Lawm!",
+    lookup_success_msg: "Koj cov nyiaj tshuav tau them tiav lawm thiab koj qhov chaw ceev tau hloov mus rau **Them Tag Nrho Lawm**. Ua tsaug ntau!",
+    btn_lookup_close: "Kaw",
+    
+    // Dynamic Categories & Map labels
+    cat_general: "Khoom Muag Feem Ntau",
+    cat_food: "Muag Zaub Mov",
+    cat_boba: "Dej Qab Zib Boba",
+    cat_fruits: "Txiv Hnyev / Txiv Ntoo",
+    cat_info: "Chaw Qhia Ntawv",
+    cat_reserved: "Ceev los ntawm Koom Txoos",
+    
+    landmark_central_tent: "Tsev Pheeb Suab Nruab Nrab (50' x 100')",
+    landmark_building: "Lub Tsev Loj (50' x 120')",
+    landmark_office: "Chaw Ua Haujlwm",
+    landmark_storage: "Chaw Khaws Khoom",
+    landmark_pavilion: "Tsev Pavilion",
+    landmark_dumpster: "Thawv Khib Nyiab",
+    landmark_fence: "LAJ KAB",
+    landmark_main_gate: "Ntawm Qhov Rooj Loj",
+    landmark_sports_field_arrow: "Mus rau Chaw Ncaws Pob",
+    compass_north: "QAUM TEB",
+    compass_east: "HNUB TUAJ",
+    compass_south: "QAB TEB",
+    compass_west: "HNUB POOB",
+    compass_sport_fields: "(chaw ncaws pob)",
+    
+    // Alert & Dynamic status texts
+    alert_correct_fields: "Thov kho cov chaw hauv qab no ua ntej yuav mus ntxiv:",
+    alert_paypal_error: "PayPal failed to process. Ensure you are using Sandbox details, or use Skip Payment (Test Mode) to test.",
+    alert_paypal_error_balance: "PayPal failed to process. Try again or use Skip Payment (Test Mode).",
+    error_email_format: "Email Address (yuav tsum yog hom email tseeb, piv txwv name@example.com)",
+    status_deposit: "Them Ceev Lawm ($",
+    status_fully_paid: "Them Tag Nrho Lawm"
+  }
+};
+
+function t(key) {
+  return (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key]) || key;
+}
+
+function setLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('hai_language_pref', lang);
+  
+  const btnToggle = document.getElementById('btn-language-toggle');
+  if (btnToggle) {
+    btnToggle.textContent = lang === 'en' ? '🌐 English' : '🌐 Hmoob';
+  }
+  
+  document.documentElement.lang = lang;
+
+  const elementsToTranslate = document.querySelectorAll('[data-i18n]');
+  elementsToTranslate.forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const translation = TRANSLATIONS[lang][key];
+    if (translation) {
+      el.textContent = translation;
+    }
+  });
+
+  const elementsWithPlaceholders = document.querySelectorAll('[data-i18n-placeholder]');
+  elementsWithPlaceholders.forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    const translation = TRANSLATIONS[lang][key];
+    if (translation) {
+      el.placeholder = translation;
+    }
+  });
+
+  if (selectedBooth) {
+    updateCheckoutPanel();
+  }
+
+  updateLookupModalTranslation();
+  renderMap();
+}
+
+function updateLookupModalTranslation() {
+  const statusBadge = document.getElementById('lookup-res-status');
+  if (statusBadge && statusBadge.textContent) {
+    const txt = statusBadge.textContent.trim();
+    if (txt === "Fully Paid" || txt === "Them Tag Nrho Lawm") {
+      statusBadge.textContent = t('lookup_status_paid');
+    } else if (txt === "Deposit Paid" || txt === "Them Ceev Lawm") {
+      statusBadge.textContent = t('lookup_status_deposit');
+    }
+  }
+
+  const resCat = document.getElementById('lookup-res-category');
+  if (resCat && resCat.textContent) {
+    const currentText = resCat.textContent.trim();
+    const catKeys = ['General', 'Food', 'Boba', 'Fruits', 'Info', 'Reserved'];
+    let foundKey = null;
+    for (const key of catKeys) {
+      if (currentText === CONFIG.categories[key].name || currentText === TRANSLATIONS.hm[`cat_${key.toLowerCase()}`] || currentText === TRANSLATIONS.en[`cat_${key.toLowerCase()}`]) {
+        foundKey = key;
+        break;
+      }
+    }
+    if (foundKey) {
+      resCat.textContent = t(`cat_${foundKey.toLowerCase()}`);
+    }
+  }
+
+  const recCat = document.getElementById('rec-booth-category');
+  if (recCat && recCat.textContent) {
+    const currentText = recCat.textContent.trim();
+    const catKeys = ['General', 'Food', 'Boba', 'Fruits', 'Info', 'Reserved'];
+    let foundKey = null;
+    for (const key of catKeys) {
+      if (currentText === CONFIG.categories[key].name || currentText === TRANSLATIONS.hm[`cat_${key.toLowerCase()}`] || currentText === TRANSLATIONS.en[`cat_${key.toLowerCase()}`]) {
+        foundKey = key;
+        break;
+      }
+    }
+    if (foundKey) {
+      recCat.textContent = t(`cat_${foundKey.toLowerCase()}`);
+    }
+  }
+
+  const recPayMode = document.getElementById('rec-pay-mode');
+  if (recPayMode && recPayMode.textContent) {
+    const currentText = recPayMode.textContent.trim();
+    if (currentText.startsWith("Deposit Paid") || currentText.startsWith("Them Ceev Lawm") || currentText.startsWith("Deposit Payment Only")) {
+      const match = currentText.match(/\d+/);
+      const priceStr = match ? match[0] : "";
+      recPayMode.textContent = t('status_deposit') + priceStr + ")";
+    } else if (currentText === "Fully Paid" || currentText === "Them Tag Nrho Lawm" || currentText === "Full Registration Fee") {
+      recPayMode.textContent = t('status_fully_paid');
+    }
+  }
+}
+
 // --- DOM ELEMENTS ---
 const elements = {
   canvasContainer: document.getElementById('canvas-container'),
@@ -198,8 +598,23 @@ const elements = {
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
   loadReservations();
-  renderMap();
   setupEventListeners();
+
+  // Detect language-specific landing pages (e.g. hmong.html) to set default on load
+  const pagePath = window.location.pathname;
+  const isHmongPage = pagePath.endsWith('hmong.html') || pagePath.endsWith('hmong') || window.location.href.includes('hmong');
+
+  if (isHmongPage) {
+    currentLang = 'hm';
+  } else {
+    const savedLang = localStorage.getItem('hai_language_pref');
+    if (savedLang === 'en' || savedLang === 'hm') {
+      currentLang = savedLang;
+    } else {
+      currentLang = 'en';
+    }
+  }
+  setLanguage(currentLang);
 
   // Check URL query parameters to reveal Admin Dashboard button (Option A)
   const urlParams = new URLSearchParams(window.location.search);
@@ -497,22 +912,22 @@ function drawLandmarks(svg, svgNS) {
     textEl.style.fontSize = "10px";
     textEl.style.fontWeight = "800";
     textEl.style.fontFamily = "var(--font-sans)";
-    textEl.textContent = "Dumpster";
+    textEl.textContent = t('landmark_dumpster');
     svg.appendChild(textEl);
   }
 
   // Draw Central Tent
-  drawBox(546, 280, 70, 140, "Central Tent (50' x 100')");
+  drawBox(546, 280, 70, 140, t('landmark_central_tent'));
 
   // Draw Building
-  drawBox(225, 720, 70, 160, "Building (50' x 120')");
+  drawBox(225, 720, 70, 160, t('landmark_building'));
 
   // Draw Office & Storage
-  drawBox(370, 780, 70, 50, "Office");
-  drawBox(370, 840, 70, 50, "Storage");
+  drawBox(370, 780, 70, 50, t('landmark_office'));
+  drawBox(370, 840, 70, 50, t('landmark_storage'));
 
   // Draw Pavilion
-  drawBox(470, 890, 100, 50, "Pavilion");
+  drawBox(470, 890, 100, 50, t('landmark_pavilion'));
 
   // Draw Dumpsters (Orange boxes)
   drawDumpster(780, 40, 65, 45);
@@ -534,7 +949,7 @@ function drawLandmarks(svg, svgNS) {
   fenceText.setAttribute("y", "460");
   fenceText.classList.add("svg-landmark-text");
   fenceText.style.fontSize = "14px";
-  fenceText.textContent = "FENCE";
+  fenceText.textContent = t('landmark_fence');
   fenceText.setAttribute("transform", "rotate(90, 895, 460)");
   svg.appendChild(fenceText);
 
@@ -575,27 +990,27 @@ function drawLandmarks(svg, svgNS) {
     svg.appendChild(arrowG);
   }
 
-  drawArrow(130, 240, "From Main Gate", false);
-  drawArrow(130, 580, "To the Sports Field", true);
+  drawArrow(130, 240, t('landmark_main_gate'), false);
+  drawArrow(130, 580, t('landmark_sports_field_arrow'), true);
 
   // Directional Compass labels (Orange matching PNG)
   function drawCompass(x, y, label) {
-    const t = document.createElementNS(svgNS, "text");
-    t.setAttribute("x", x);
-    t.setAttribute("y", y);
-    t.setAttribute("text-anchor", "middle");
-    t.classList.add("svg-landmark-text");
-    t.style.fontSize = "24px";
-    t.style.fontWeight = "900";
-    t.style.fill = "#ea580c"; // Solid Orange compass headings
-    t.textContent = label;
-    svg.appendChild(t);
+    const tEl = document.createElementNS(svgNS, "text");
+    tEl.setAttribute("x", x);
+    tEl.setAttribute("y", y);
+    tEl.setAttribute("text-anchor", "middle");
+    tEl.classList.add("svg-landmark-text");
+    tEl.style.fontSize = "24px";
+    tEl.style.fontWeight = "900";
+    tEl.style.fill = "#ea580c"; // Solid Orange compass headings
+    tEl.textContent = label;
+    svg.appendChild(tEl);
   }
   
-  drawCompass(430, 25, "NORTH");
-  drawCompass(930, 320, "EAST"); // Right of fence
-  drawCompass(640, 990, "SOUTH");
-  drawCompass(80, 380, "WEST"); // Moved WEST further left next to the entrance gate space
+  drawCompass(430, 25, t('compass_north'));
+  drawCompass(930, 320, t('compass_east')); // Right of fence
+  drawCompass(640, 990, t('compass_south'));
+  drawCompass(80, 380, t('compass_west')); // Moved WEST further left next to the entrance gate space
 
   // Add (sport fields) underneath WEST compass heading
   const westSub = document.createElementNS(svgNS, "text");
@@ -606,7 +1021,7 @@ function drawLandmarks(svg, svgNS) {
   westSub.style.fontSize = "12px";
   westSub.style.fontWeight = "700";
   westSub.style.fill = "#ea580c";
-  westSub.textContent = "(sport fields)";
+  westSub.textContent = t('compass_sport_fields');
   svg.appendChild(westSub);
 }
 
@@ -618,7 +1033,7 @@ function showTooltip(e, booth) {
   if (booth.id === "1-L" || booth.id === "1-R") dispId = "1";
   elements.tipTitle.textContent = `Booth #${dispId}`;
   
-  elements.tipDesc.textContent = `${catMeta.name} (${catMeta.size})`;
+  elements.tipDesc.textContent = `${t(`cat_${booth.category.toLowerCase()}`)} (${catMeta.size})`;
   
   // Show pricing options
   if (catMeta.depositPrice === catMeta.fullPrice) {
@@ -683,7 +1098,7 @@ function updateCheckoutPanel() {
   if (selectedBooth.id === "1-L" || selectedBooth.id === "1-R") dispId = "1";
   elements.dispBoothId.textContent = `#${dispId}`;
   
-  elements.dispBoothCategory.textContent = catMeta.name;
+  elements.dispBoothCategory.textContent = t(`cat_${selectedBooth.category.toLowerCase()}`);
   elements.dispBoothCategory.className = `badge color-${selectedBooth.category.toLowerCase()}`;
   elements.dispBoothDimensions.textContent = catMeta.size;
 
@@ -730,6 +1145,15 @@ function updatePaymentOptionsUI() {
 
 // --- EVENT HANDLERS ---
 function setupEventListeners() {
+  // Language Switcher Toggle Click Event
+  const btnLang = document.getElementById('btn-language-toggle');
+  if (btnLang) {
+    btnLang.addEventListener('click', () => {
+      const nextLang = currentLang === 'en' ? 'hm' : 'en';
+      setLanguage(nextLang);
+    });
+  }
+
   // Payment Type button toggling
   elements.btnPayDeposit.addEventListener('click', () => {
     if (selectedPaymentMode !== 'deposit') {
@@ -754,7 +1178,7 @@ function setupEventListeners() {
       const mockTxId = `MOCK-PAY-${Math.random().toString(36).substring(2, 11).toUpperCase()}`;
       completeBooking(mockTxId);
     } else {
-      alert("Please correct the following fields before proceeding:\n\n- " + validation.errors.join("\n- "));
+      alert(t('alert_correct_fields') + "\n\n- " + validation.errors.join("\n- "));
     }
   });
 
@@ -948,21 +1372,21 @@ function validateForm() {
   const errors = [];
   
   if (nameVal === "") {
-    errors.push("Contact Full Name");
+    errors.push(t('label_contact_name').replace(' *', ''));
   }
   
   if (emailVal === "") {
-    errors.push("Email Address");
+    errors.push(t('label_email').replace(' *', ''));
   } else if (!elements.inputEmail.checkValidity()) {
-    errors.push("Email Address (must be a valid email format, e.g. name@example.com)");
+    errors.push(t('error_email_format'));
   }
   
   if (phoneVal === "") {
-    errors.push("Phone Number");
+    errors.push(t('label_phone').replace(' *', ''));
   }
   
   if (businessVal === "") {
-    errors.push("Business / Vendor Name");
+    errors.push(t('label_business').replace(' *', ''));
   }
   
   if (errors.length > 0) {
@@ -993,7 +1417,7 @@ function renderPayPalButtons(price, description) {
     onClick: function(data, actions) {
       const validation = validateForm();
       if (!validation.valid) {
-        alert("Please correct the following fields before proceeding:\n\n- " + validation.errors.join("\n- "));
+        alert(t('alert_correct_fields') + "\n\n- " + validation.errors.join("\n- "));
         return actions.reject();
       } else {
         return actions.resolve();
@@ -1021,7 +1445,7 @@ function renderPayPalButtons(price, description) {
     },
     onError: function(err) {
       console.error("PayPal integration error: ", err);
-      alert("PayPal failed to process. Ensure you are using Sandbox details, or use Skip Payment (Test Mode) to test.");
+      alert(t('alert_paypal_error'));
     }
   }).render('#paypal-button-container');
 }
@@ -1135,6 +1559,14 @@ function renderAdminTable(searchQuery = '') {
       const tr = document.createElement('tr');
       let dispId = b.boothId;
       if (b.boothId === "1-L" || b.boothId === "1-R") dispId = "1";
+      
+      let payModeTranslated = b.payMode || '';
+      if (b.payMode === "Deposit Payment Only") {
+        payModeTranslated = t('payment_option_deposit');
+      } else if (b.payMode === "Full Registration Fee") {
+        payModeTranslated = t('payment_fixed_full');
+      }
+
       tr.innerHTML = `
         <td style="font-weight: 700; color: var(--color-booth-selected);">#${dispId}</td>
         <td style="font-weight: 600; color: #ffffff;">${escapeHtml(b.business)}</td>
@@ -1142,7 +1574,7 @@ function renderAdminTable(searchQuery = '') {
         <td><a href="mailto:${escapeHtml(b.email)}" style="color: #60a5fa; text-decoration: none;">${escapeHtml(b.email)}</a></td>
         <td><a href="tel:${escapeHtml(b.phone)}" style="color: var(--text-secondary); text-decoration: none;">${escapeHtml(b.phone)}</a></td>
         <td style="font-weight: 700; color: #10b981;">${escapeHtml(b.pricePaid)}</td>
-        <td style="font-size: 0.8rem; color: var(--text-secondary);">${escapeHtml(b.payMode)}</td>
+        <td style="font-size: 0.8rem; color: var(--text-secondary);">${escapeHtml(payModeTranslated)}</td>
         <td style="font-size: 0.8rem;">${escapeHtml(b.date)}</td>
         <td style="font-family: monospace; font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(b.transactionId)}</td>
       `;
@@ -1240,7 +1672,15 @@ async function performLookup(email, transactionId) {
       let dispId = row.booth_id;
       if (row.booth_id === "1-L" || row.booth_id === "1-R") dispId = "1";
       document.getElementById('lookup-res-booth').textContent = `#${dispId}`;
-      document.getElementById('lookup-res-category').textContent = row.booth_category || '--';
+      let catTextTranslated = row.booth_category || '--';
+      const catKeys = ['General', 'Food', 'Boba', 'Fruits', 'Info', 'Reserved'];
+      for (const key of catKeys) {
+        if (catTextTranslated === CONFIG.categories[key].name) {
+          catTextTranslated = t(`cat_${key.toLowerCase()}`);
+          break;
+        }
+      }
+      document.getElementById('lookup-res-category').textContent = catTextTranslated;
       document.getElementById('lookup-res-paid').textContent = row.price_paid || '--';
 
       const statusBadge = document.getElementById('lookup-res-status');
@@ -1248,7 +1688,7 @@ async function performLookup(email, transactionId) {
 
       // Check reservation payment status
       if (row.payment_mode === "Full Registration Fee") {
-        statusBadge.textContent = "Fully Paid";
+        statusBadge.textContent = t('lookup_status_paid');
         statusBadge.style.background = "rgba(16, 185, 129, 0.15)";
         statusBadge.style.color = "#10b981";
         if (balanceSection) balanceSection.style.display = 'none';
@@ -1260,7 +1700,7 @@ async function performLookup(email, transactionId) {
         const paidAmount = parseFloat(row.price_paid.replace('$', '')) || 0;
         const balanceDue = Math.max(0, fullPrice - paidAmount);
 
-        statusBadge.textContent = "Deposit Paid";
+        statusBadge.textContent = t('lookup_status_deposit');
         statusBadge.style.background = "rgba(245, 158, 11, 0.15)";
         statusBadge.style.color = "#f59e0b";
 
@@ -1341,7 +1781,7 @@ function renderPayPalBalanceButton(row, balanceDue) {
     },
     onError: function(err) {
       console.error("PayPal balance capture error: ", err);
-      alert("PayPal failed to process. Try again or use Skip Payment (Test Mode).");
+      alert(t('alert_paypal_error_balance'));
     }
   }).render('#paypal-balance-button-container');
 }
@@ -1455,6 +1895,13 @@ Object.defineProperty(window, 'selectedPaymentMode', {
 Object.defineProperty(window, 'currentZoom', {
   get: () => currentZoom,
   set: (val) => { currentZoom = val; },
+  configurable: true,
+  enumerable: true
+});
+
+Object.defineProperty(window, 'currentLang', {
+  get: () => currentLang,
+  set: (val) => { setLanguage(val); },
   configurable: true,
   enumerable: true
 });
