@@ -95,21 +95,22 @@
         <!-- Interactive Canvas Wrapper (keeps aspect ratio and contains underlay + SVG) -->
         <div class="map-canvas-wrapper" id="canvas-container-wrapper">
           
-
-
-          <!-- Scrollable Visual Canvas (SVG Overlay) -->
-          <div class="map-container" id="canvas-container">
-            <!-- SVG Layout Map is dynamically rendered here by app.js -->
+          <!-- Scrollable viewport for the zoomed canvas -->
+          <div class="map-viewport" id="canvas-viewport">
+            <!-- Scrollable Visual Canvas (SVG Overlay) -->
+            <div class="map-container" id="canvas-container">
+              <!-- SVG Layout Map is dynamically rendered here by app.js -->
+            </div>
           </div>
 
-        </div>
+          <!-- Floating Zoom Controls -->
+          <div class="zoom-controls">
+            <button class="zoom-btn" id="btn-zoom-in" type="button" title="Zoom In">＋</button>
+            <span class="zoom-level" id="zoom-level-text">100%</span>
+            <button class="zoom-btn" id="btn-zoom-out" type="button" title="Zoom Out">－</button>
+            <button class="zoom-btn" id="btn-zoom-reset" type="button" title="Reset Zoom">⟲</button>
+          </div>
 
-        <!-- Floating Zoom Controls -->
-        <div class="zoom-controls">
-          <button class="zoom-btn" id="btn-zoom-in" type="button" title="Zoom In">＋</button>
-          <span class="zoom-level" id="zoom-level-text">100%</span>
-          <button class="zoom-btn" id="btn-zoom-out" type="button" title="Zoom Out">－</button>
-          <button class="zoom-btn" id="btn-zoom-reset" type="button" title="Reset Zoom">⟲</button>
         </div>
 
       </div>

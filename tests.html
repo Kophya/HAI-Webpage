@@ -594,6 +594,11 @@
           // Verify SVG canvas contains pinch zoom listeners
           const canvas = doc.getElementById('canvas-container');
           assert(canvas !== null, "Interactive SVG canvas container was not found");
+          const wrapper = doc.querySelector('.map-canvas-wrapper');
+          assert(wrapper !== null, "Map wrapper (.map-canvas-wrapper) not found");
+          const rect = wrapper.getBoundingClientRect();
+          assert(rect.width > 10, "Map wrapper width collapsed to: " + rect.width);
+          assert(rect.height > 10, "Map wrapper height collapsed to: " + rect.height);
         }
       },
       {
@@ -618,6 +623,12 @@
           // Check vertical stacking sequence on Android
           assert(map.bottom <= sidebar.top + 5, `Expected Map Workspace above Checkout Sidebar on Android. Map bottom: ${map.bottom}, Sidebar top: ${sidebar.top}`);
           assert(sidebar.bottom <= location.top + 5, `Expected Checkout Sidebar above Location Card on Android. Sidebar bottom: ${sidebar.bottom}, Location top: ${location.top}`);
+
+          const wrapper = doc.querySelector('.map-canvas-wrapper');
+          assert(wrapper !== null, "Map wrapper (.map-canvas-wrapper) not found on Android");
+          const rect = wrapper.getBoundingClientRect();
+          assert(rect.width > 10, "Map wrapper width collapsed on Android to: " + rect.width);
+          assert(rect.height > 10, "Map wrapper height collapsed on Android to: " + rect.height);
         }
       },
       {

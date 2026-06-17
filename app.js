@@ -589,6 +589,7 @@ function updateLookupModalTranslation() {
 // --- DOM ELEMENTS ---
 const elements = {
   canvasContainer: document.getElementById('canvas-container'),
+  canvasViewport: document.getElementById('canvas-viewport'),
   checkoutEmpty: document.getElementById('checkout-empty'),
   checkoutActive: document.getElementById('checkout-active'),
   dispBoothId: document.getElementById('disp-booth-id'),
@@ -1287,6 +1288,49 @@ function setupEventListeners() {
     }
   });
 
+  // Desktop Drag-To-Scroll / Click-and-Drag Panning on Map Viewport
+  if (elements.canvasViewport) {
+    let isDown = false;
+    let startX;
+    let startY;
+    let scrollLeft;
+    let scrollTop;
+
+    elements.canvasViewport.addEventListener('mousedown', (e) => {
+      // Avoid dragging when clicking on interactive map elements like booths
+      const isBooth = e.target.closest('.svg-booth');
+      if (isBooth) return;
+
+      isDown = true;
+      elements.canvasViewport.classList.add('active-dragging');
+      startX = e.pageX - elements.canvasViewport.offsetLeft;
+      startY = e.pageY - elements.canvasViewport.offsetTop;
+      scrollLeft = elements.canvasViewport.scrollLeft;
+      scrollTop = elements.canvasViewport.scrollTop;
+    });
+
+    elements.canvasViewport.addEventListener('mouseleave', () => {
+      isDown = false;
+      elements.canvasViewport.classList.remove('active-dragging');
+    });
+
+    elements.canvasViewport.addEventListener('mouseup', () => {
+      isDown = false;
+      elements.canvasViewport.classList.remove('active-dragging');
+    });
+
+    elements.canvasViewport.addEventListener('mousemove', (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - elements.canvasViewport.offsetLeft;
+      const y = e.pageY - elements.canvasViewport.offsetTop;
+      const walkX = (x - startX) * 1.5; // Drag speed multiplier
+      const walkY = (y - startY) * 1.5;
+      elements.canvasViewport.scrollLeft = scrollLeft - walkX;
+      elements.canvasViewport.scrollTop = scrollTop - walkY;
+    });
+  }
+
   // --- ADMIN LOGBOOK EVENTS ---
   const btnAdminOpen = document.getElementById('btn-admin-dashboard');
   const btnAdminClose = document.getElementById('btn-admin-close');
@@ -1402,26 +1446,20 @@ function setupEventListeners() {
 
 // Apply the current zoom level to the SVG layout
 function applyZoom() {
-  const canvasWrapper = document.getElementById('canvas-container-wrapper');
   const svgElement = elements.canvasContainer.querySelector('svg');
-  if (canvasWrapper && svgElement) {
+  if (svgElement) {
     if (currentZoom === 1.0) {
-      canvasWrapper.style.width = "100%";
-      canvasWrapper.style.height = "100%";
-      canvasWrapper.style.maxWidth = "100%";
-      canvasWrapper.style.maxHeight = "100%";
-      
-      svgElement.style.width = "100%";
-      svgElement.style.height = "100%";
+      elements.canvasContainer.style.width = "100%";
+      elements.canvasContainer.style.height = "100%";
     } else {
-      canvasWrapper.style.width = `${CONFIG.svgWidth * currentZoom}px`;
-      canvasWrapper.style.height = `${CONFIG.svgHeight * currentZoom}px`;
-      canvasWrapper.style.maxWidth = "none";
-      canvasWrapper.style.maxHeight = "none";
-      
-      svgElement.style.width = "100%";
-      svgElement.style.height = "100%";
+      // Scale the map container as a percentage of the viewport container size
+      const zoomPercent = `${Math.round(currentZoom * 100)}%`;
+      elements.canvasContainer.style.width = zoomPercent;
+      elements.canvasContainer.style.height = zoomPercent;
     }
+    
+    svgElement.style.width = "100%";
+    svgElement.style.height = "100%";
     document.getElementById('zoom-level-text').textContent = `${Math.round(currentZoom * 100)}%`;
   }
 }

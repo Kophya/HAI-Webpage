@@ -165,6 +165,7 @@ header {
   flex: 1;
   position: relative;
   height: calc(100vh - 90px);
+  max-height: calc(100vh - 90px); /* Strictly constrain height to viewport on desktop, preventing content from expanding page vertically */
   min-height: 800px; /* Enforce a premium height so the map is always large and clear */
   overflow: hidden;
   padding: 24px; /* Outer spacing */
@@ -178,6 +179,8 @@ header {
   flex-direction: column;
   gap: 20px;
   height: 100%;
+  min-width: 0; /* Prevents zoomed map canvas from expanding workspace width and pushing checkout out of view */
+  min-height: 0; /* Prevents zoomed map canvas from expanding workspace height and causing vertical page overflow */
 }
 
 /* Redesigned Legend: Much larger, cleaner, and easier to see */
@@ -247,11 +250,12 @@ header {
 .map-board-wrapper {
   position: relative;
   width: 100%;
-  min-height: 580px;
+  height: auto; /* Let flex: 1 resolve height dynamically in flex parent */
+  min-height: 0; /* Prevents zoomed map canvas from expanding wrapper height */
   flex: 1;
   border: 2px solid var(--border-color);
   border-radius: var(--border-radius-lg);
-  overflow: auto; /* Allow scrolling when child zooms in */
+  overflow: hidden; /* Guarantee outer wrapper never scrolls */
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
   background: rgba(255, 255, 255, 0.45); /* Soft background showing grid lines */
   display: flex;
@@ -272,14 +276,30 @@ header {
   max-width: 100%;
   max-height: 100%;
   flex: none;
-  overflow: hidden;
+  overflow: visible; /* Let absolute items like zoom controls sit on top nicely */
 }
 
-/* Map Area Canvas (Overlaying on top of Google Maps) */
-.map-container {
+/* Scrollable Viewport inside the white card */
+.map-viewport {
   position: absolute;
   top: 0;
   left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto; /* Scrollable viewport for the zoomed canvas */
+  display: flex;
+  cursor: grab;
+  border-radius: calc(var(--border-radius-md) - 2px); /* Keep inside white card border radius */
+}
+
+.map-viewport.active-dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
+/* Map Area Canvas */
+.map-container {
+  position: relative;
   width: 100%;
   height: 100%;
   z-index: 2;
@@ -289,6 +309,8 @@ header {
   justify-content: center;
   align-items: flex-start;
   pointer-events: auto; /* Clicks operate normally */
+  flex: none;
+  margin: auto;
 }
 
 .scroll-hint {
@@ -376,6 +398,8 @@ header {
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08); /* Clean drop shadow */
   align-self: flex-start; /* Fit content height instead of stretching */
   flex-shrink: 0;
+  max-height: 100%; /* Prevent sidebar from expanding past app container height */
+  overflow-y: auto; /* Enable vertical scroll if checkout form is taller than viewport */
 }
 
 .checkout-title h2 {
@@ -858,7 +882,8 @@ header {
   .app-container {
     flex-direction: column;
     height: auto;
-    min-height: none;
+    min-height: 0;
+    max-height: none; /* Crucial: removes desktop viewport height limit on mobile */
     overflow: visible;
     padding: 16px;
     gap: 16px;
@@ -867,11 +892,17 @@ header {
   .sidebar-checkout {
     width: 100%;
     height: auto;
+    max-height: none; /* Crucial: removes max-height limit on mobile */
     align-self: stretch;
   }
   
   .map-workspace {
-    height: 600px;
+    height: auto;
+  }
+  
+  .map-board-wrapper {
+    height: 550px;
+    min-height: 550px;
   }
   
   .location-container {
