@@ -869,6 +869,47 @@ function setupEventListeners() {
       window.print();
     });
   }
+
+  // --- RESERVATION LOOKUP EVENTS ---
+  const linkLookup = document.getElementById('link-lookup-booking');
+  const modalLookup = document.getElementById('modal-lookup');
+  const btnLookupClose = document.getElementById('btn-lookup-close');
+  const btnLookupCloseX = document.getElementById('btn-lookup-close-x');
+  const formLookup = document.getElementById('form-lookup');
+  const inputLookupEmail = document.getElementById('input-lookup-email');
+  const inputLookupTxid = document.getElementById('input-lookup-txid');
+
+  if (linkLookup) {
+    linkLookup.addEventListener('click', (e) => {
+      e.preventDefault();
+      // Reset lookup search fields and results states
+      if (inputLookupEmail) inputLookupEmail.value = '';
+      if (inputLookupTxid) inputLookupTxid.value = '';
+      document.getElementById('lookup-loading').style.display = 'none';
+      document.getElementById('lookup-error').style.display = 'none';
+      document.getElementById('lookup-results').style.display = 'none';
+      document.getElementById('lookup-success').style.display = 'none';
+      document.getElementById('form-lookup').style.display = 'flex';
+      
+      if (modalLookup) modalLookup.classList.add('active');
+    });
+  }
+
+  const closeLookup = () => {
+    if (modalLookup) modalLookup.classList.remove('active');
+  };
+
+  if (btnLookupClose) btnLookupClose.addEventListener('click', closeLookup);
+  if (btnLookupCloseX) btnLookupCloseX.addEventListener('click', closeLookup);
+
+  if (formLookup) {
+    formLookup.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = inputLookupEmail.value.trim();
+      const txid = inputLookupTxid.value.trim();
+      performLookup(email, txid);
+    });
+  }
 }
 
 // Apply the current zoom level to the SVG layout
@@ -1151,6 +1192,232 @@ function exportCSV() {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+}
+
+// --- RESERVATION LOOKUP & BALANCE PAYMENT FLOW ---
+async function performLookup(email, transactionId) {
+  const loading = document.getElementById('lookup-loading');
+  const errorAlert = document.getElementById('lookup-error');
+  const resultsDiv = document.getElementById('lookup-results');
+  const successAlert = document.getElementById('lookup-success');
+  const form = document.getElementById('form-lookup');
+
+  // Reset display states
+  if (loading) loading.style.display = 'block';
+  if (errorAlert) errorAlert.style.display = 'none';
+  if (resultsDiv) resultsDiv.style.display = 'none';
+  if (successAlert) successAlert.style.display = 'none';
+  if (form) form.style.display = 'none';
+
+  try {
+    // Perform case-insensitive search by email and substring match by transaction_id in Supabase
+    const response = await fetch(`${CONFIG.supabaseUrl}/rest/v1/bookings?email=ilike.${encodeURIComponent(email)}&transaction_id=ilike.*${encodeURIComponent(transactionId)}*`, {
+      method: 'GET',
+      headers: {
+        'apikey': CONFIG.supabaseKey,
+        'Authorization': `Bearer ${CONFIG.supabaseKey}`
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (loading) loading.style.display = 'none';
+
+      if (data.length === 0) {
+        if (errorAlert) errorAlert.style.display = 'block';
+        if (form) form.style.display = 'flex';
+        return;
+      }
+
+      // Found active reservation entry
+      const row = data[0];
+      if (resultsDiv) resultsDiv.style.display = 'flex';
+
+      // Map row parameters to lookup results UI
+      document.getElementById('lookup-res-business').textContent = row.business_name || '--';
+      document.getElementById('lookup-res-name').textContent = row.contact_name || '--';
+      
+      let dispId = row.booth_id;
+      if (row.booth_id === "1-L" || row.booth_id === "1-R") dispId = "1";
+      document.getElementById('lookup-res-booth').textContent = `#${dispId}`;
+      document.getElementById('lookup-res-category').textContent = row.booth_category || '--';
+      document.getElementById('lookup-res-paid').textContent = row.price_paid || '--';
+
+      const statusBadge = document.getElementById('lookup-res-status');
+      const balanceSection = document.getElementById('lookup-balance-due-section');
+
+      // Check reservation payment status
+      if (row.payment_mode === "Full Registration Fee") {
+        statusBadge.textContent = "Fully Paid";
+        statusBadge.style.background = "rgba(16, 185, 129, 0.15)";
+        statusBadge.style.color = "#10b981";
+        if (balanceSection) balanceSection.style.display = 'none';
+      } else {
+        // Balance due details lookup & calculation
+        const booth = CONFIG.booths.find(b => b.id === row.booth_id);
+        const catMeta = booth ? CONFIG.categories[booth.category] : null;
+        const fullPrice = catMeta ? catMeta.fullPrice : 0;
+        const paidAmount = parseFloat(row.price_paid.replace('$', '')) || 0;
+        const balanceDue = Math.max(0, fullPrice - paidAmount);
+
+        statusBadge.textContent = "Deposit Paid";
+        statusBadge.style.background = "rgba(245, 158, 11, 0.15)";
+        statusBadge.style.color = "#f59e0b";
+
+        if (balanceDue > 0) {
+          document.getElementById('lookup-balance-amount').textContent = `$${balanceDue}`;
+          if (balanceSection) balanceSection.style.display = 'flex';
+
+          // Render PayPal button for remaining balance amount
+          renderPayPalBalanceButton(row, balanceDue);
+
+          // TEMP: Test bypass button (Remove before production release)
+          const btnBypass = document.getElementById('btn-bypass-balance');
+          if (btnBypass) {
+            // Recreate node to remove prior event listeners cleanly
+            const newBtnBypass = btnBypass.cloneNode(true);
+            btnBypass.parentNode.replaceChild(newBtnBypass, btnBypass);
+            newBtnBypass.addEventListener('click', () => {
+              const mockTxId = `MOCK-BAL-${Math.random().toString(36).substring(2, 11).toUpperCase()}`;
+              completeBalancePayment(row, balanceDue, mockTxId);
+            });
+          }
+        } else {
+          if (balanceSection) balanceSection.style.display = 'none';
+        }
+      }
+    } else {
+      if (loading) loading.style.display = 'none';
+      if (errorAlert) {
+        errorAlert.textContent = `❌ Database query failed: ${response.statusText}`;
+        errorAlert.style.display = 'block';
+      }
+      if (form) form.style.display = 'flex';
+    }
+  } catch (err) {
+    if (loading) loading.style.display = 'none';
+    if (errorAlert) {
+      errorAlert.textContent = "❌ Connection failed. Operating in offline mode.";
+      errorAlert.style.display = 'block';
+    }
+    if (form) form.style.display = 'flex';
+    console.error("Supabase lookup request failed: ", err);
+  }
+}
+
+// Render official PayPal SDK buttons for balance checkout inside lookup modal
+function renderPayPalBalanceButton(row, balanceDue) {
+  const container = document.getElementById('paypal-balance-button-container');
+  if (!container) return;
+  container.innerHTML = ''; // Reset container
+
+  if (typeof paypal === 'undefined') {
+    container.innerHTML = "<p style='color: var(--color-warning); font-size: 0.85rem;'>PayPal SDK failed to load. Please use Skip Payment (Test Mode).</p>";
+    return;
+  }
+
+  paypal.Buttons({
+    style: {
+      layout: 'vertical',
+      color:  'gold',
+      shape:  'rect',
+      label:  'paypal'
+    },
+    createOrder: function(data, actions) {
+      return actions.order.create({
+        purchase_units: [{
+          amount: {
+            value: balanceDue.toString(),
+            currency_code: 'USD'
+          },
+          description: `Remaining Balance for Booth #${row.booth_id} (${row.booth_category})`
+        }]
+      });
+    },
+    onApprove: function(data, actions) {
+      return actions.order.capture().then(function(details) {
+        completeBalancePayment(row, balanceDue, details.id);
+      });
+    },
+    onError: function(err) {
+      console.error("PayPal balance capture error: ", err);
+      alert("PayPal failed to process. Try again or use Skip Payment (Test Mode).");
+    }
+  }).render('#paypal-balance-button-container');
+}
+
+// Complete balance updates and patch Supabase database record
+async function completeBalancePayment(row, balanceDue, balanceTxId) {
+  const resultsDiv = document.getElementById('lookup-results');
+  const successAlert = document.getElementById('lookup-success');
+  const loading = document.getElementById('lookup-loading');
+
+  if (resultsDiv) resultsDiv.style.display = 'none';
+  if (loading) {
+    loading.style.display = 'block';
+    const textEl = loading.querySelector('p');
+    if (textEl) textEl.textContent = "Processing balance payment & syncing database...";
+  }
+
+  // Calculate new total price paid values
+  const booth = CONFIG.booths.find(b => b.id === row.booth_id);
+  const catMeta = booth ? CONFIG.categories[booth.category] : null;
+  const fullPrice = catMeta ? catMeta.fullPrice : 0;
+  
+  const updatedPricePaid = `$${fullPrice}`;
+  const updatedPayMode = "Full Registration Fee";
+  const updatedTxId = `${row.transaction_id} / ${balanceTxId}`;
+
+  // Patch database via REST api
+  try {
+    const response = await fetch(`${CONFIG.supabaseUrl}/rest/v1/bookings?booth_id=eq.${encodeURIComponent(row.booth_id)}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': CONFIG.supabaseKey,
+        'Authorization': `Bearer ${CONFIG.supabaseKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        price_paid: updatedPricePaid,
+        payment_mode: updatedPayMode,
+        transaction_id: updatedTxId
+      })
+    });
+
+    if (!response.ok) {
+      console.warn("Supabase PATCH failed: ", response.statusText);
+    } else {
+      console.log("Supabase booking updated to Fully Paid.");
+    }
+  } catch (err) {
+    console.error("Failed to patch Supabase database: ", err);
+  }
+
+  // Sync with client state and localStorage
+  localReservations[row.booth_id] = {
+    boothId: row.booth_id,
+    boothCategory: row.booth_category,
+    boothDimensions: row.booth_dimensions,
+    name: row.contact_name,
+    email: row.email,
+    phone: row.phone,
+    business: row.business_name,
+    pricePaid: updatedPricePaid,
+    payMode: updatedPayMode,
+    transactionId: updatedTxId,
+    date: new Date().toLocaleString()
+  };
+  localStorage.setItem('hai_booth_bookings', JSON.stringify(localReservations));
+
+  // Redraw map with updated status
+  renderMap();
+
+  if (loading) loading.style.display = 'none';
+  if (successAlert) successAlert.style.display = 'block';
+
+  // Async load fresh database sync
+  loadReservations();
 }
 
 // Standard security helper to escape HTML inputs and protect against XSS injection
