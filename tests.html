@@ -365,9 +365,41 @@
         localStorage.removeItem('hai_booth_bookings');
         localStorage.removeItem('hai_language_pref');
         
-        iframe.onload = () => {
+        iframe.onload = async () => {
+          const win = iframe.contentWindow;
+          if (win) {
+            // Hijack fetch to mock Supabase database operations
+            const originalFetch = win.fetch;
+            win.fetch = async (url, options) => {
+              const urlStr = url ? url.toString() : '';
+              if (urlStr.includes('/rest/v1/bookings')) {
+                if (options && (options.method === 'POST' || options.method === 'PATCH')) {
+                  return {
+                    ok: true,
+                    status: 200,
+                    json: async () => ({})
+                  };
+                }
+                // GET request: return empty bookings so all booths are available during tests
+                return {
+                  ok: true,
+                  status: 200,
+                  json: async () => []
+                };
+              }
+              return originalFetch.call(win, url, options);
+            };
+
+            if (win.loadReservationsPromise) {
+              try {
+                await win.loadReservationsPromise;
+              } catch (err) {
+                console.warn("loadReservationsPromise failed:", err);
+              }
+            }
+          }
           // Brief timeout to let JS load and draw initial SVG layout
-          setTimeout(resolve, 300);
+          setTimeout(resolve, 200);
         };
         iframe.src = 'index.html';
       });
@@ -555,12 +587,12 @@
           const sidebar = doc.querySelector('.sidebar-checkout').getBoundingClientRect();
           const location = doc.querySelector('.location-container').getBoundingClientRect();
           
-          // Check side-by-side positioning
+          // Check side-by-side positioning: Map on left, checkout sidebar & event location on right
           assert(map.right <= sidebar.left + 5, `Expected Map Workspace on left of Checkout Sidebar on Desktop. Map right: ${map.right}, Sidebar left: ${sidebar.left}`);
+          assert(map.right <= location.left + 5, `Expected Map Workspace on left of Location Container on Desktop. Map right: ${map.right}, Location left: ${location.left}`);
           
-          // Check location map card is placed below the fold (below main viewport container)
-          const appContainer = doc.querySelector('.app-container').getBoundingClientRect();
-          assert(location.top >= appContainer.bottom - 5, `Expected Event Location Card to sit below the fold on desktop. Location top: ${location.top}, Main bottom: ${appContainer.bottom}`);
+          // Check vertical stacking in the right column: Checkout Sidebar on top, Location Container below it
+          assert(sidebar.bottom <= location.top + 5, `Expected Checkout Sidebar to stack above Event Location Card on desktop. Sidebar bottom: ${sidebar.bottom}, Location top: ${location.top}`);
         }
       },
       {
@@ -719,6 +751,89 @@
           btnClose.dispatchEvent(new MouseEvent('click'));
           await new Promise(r => setTimeout(r, 100));
           assert(!modalLookupEl.classList.contains('active'), "Lookup modal should not be active after closing");
+        }
+      },
+      {
+        id: "stripe-payment-integration",
+        name: "Stripe Payment integration and admin logbook rendering",
+        fn: async () => {
+          const { win, doc } = getApp();
+          
+          // Clear localStorage so we have a clean test
+          win.localStorage.removeItem('hai_booth_bookings');
+          win.loadReservations();
+          win.renderMap();
+          
+          // Select Booth 4 (General)
+          const rect = doc.querySelector('rect.svg-booth[x="566"]');
+          assert(rect !== null, "Could not locate Booth 4 SVG rectangle");
+          rect.dispatchEvent(new MouseEvent('click'));
+          
+          // Populate form fields
+          win.elements.inputName.value = "Stripe Tester";
+          win.elements.inputEmail.value = "stripe@test.com";
+          win.elements.inputPhone.value = "123-456-7890";
+          win.elements.inputBusiness.value = "Stripe Shop";
+          
+          // Toggle payment method to Stripe
+          win.selectedPaymentMethod = 'stripe';
+          
+          // Verify validation fails with invalid card
+          const valResult = win.validateStripeCard('123', '12/', '12');
+          assert(valResult.valid === false, "Stripe validation should fail for incorrect input values");
+          assert(valResult.errors.length === 3, "Stripe validation should report 3 errors");
+          
+          // Populate Stripe fields
+          const cardInput = doc.getElementById('input-stripe-card');
+          const expiryInput = doc.getElementById('input-stripe-expiry');
+          const cvcInput = doc.getElementById('input-stripe-cvc');
+          
+          cardInput.value = "4111 2222 3333 4444";
+          expiryInput.value = "12/28";
+          cvcInput.value = "123";
+          
+          // Verify valid validation
+          const valResult2 = win.validateStripeCard(cardInput.value, expiryInput.value, cvcInput.value);
+          assert(valResult2.valid === true, "Stripe card validation failed on valid card credentials");
+          
+          // Trigger Stripe payment
+          const btnStripePay = doc.getElementById('btn-stripe-pay');
+          assert(btnStripePay !== null, "Stripe payment button not found");
+          btnStripePay.dispatchEvent(new MouseEvent('click'));
+          
+          // Wait 1.6s for mock stripe network delay processing
+          await new Promise(r => setTimeout(r, 1600));
+          
+          // Verify Receipt modal is active
+          const receiptModal = doc.getElementById('modal-receipt');
+          assert(receiptModal.classList.contains('active'), "Receipt modal failed to open after Stripe payment completed");
+          
+          // Verify receipt contents
+          assert(doc.getElementById('rec-business').textContent === "Stripe Shop", "Receipt did not map business name correctly");
+          assert(doc.getElementById('rec-booth-id').textContent === "#4", "Receipt did not map booth number correctly");
+          assert(doc.getElementById('rec-payment-method').textContent === "Stripe", "Receipt did not display Stripe as Payment Method");
+          
+          // Verify transaction ID does not have prefix in display
+          const recTxId = doc.getElementById('rec-transaction-id').textContent;
+          assert(!recTxId.includes("stripe:"), "Receipt transaction ID should strip stripe: prefix");
+          
+          // Open admin logbook and verify rendering of stripe payment column
+          const btnAdmin = doc.getElementById('btn-admin-dashboard');
+          if (btnAdmin) {
+            btnAdmin.dispatchEvent(new MouseEvent('click'));
+            await new Promise(r => setTimeout(r, 100));
+            const rows = doc.querySelectorAll('#admin-table-body tr');
+            assert(rows.length > 0, "No rows rendered in admin dashboard logbook");
+            
+            // The row should contain "Stripe" in payment method cell
+            let foundStripe = false;
+            rows.forEach(row => {
+              if (row.textContent.includes("Stripe") && row.textContent.includes("Stripe Shop")) {
+                foundStripe = true;
+              }
+            });
+            assert(foundStripe, "Admin dashboard table did not render Stripe payment method column");
+          }
         }
       }
     ];

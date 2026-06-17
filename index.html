@@ -118,150 +118,183 @@
     </section>
 
 
-    <!-- RIGHT SIDE: CHECKOUT SIDEBAR -->
-    <aside class="sidebar-checkout" aria-label="Booth Reservation Checkout">
-      <div class="checkout-title">
-        <h2 data-i18n="sidebar_title">Reserve Spot</h2>
-        <p data-i18n="sidebar_subtitle">Select an available booth on the layout to begin</p>
-      </div>
+    <!-- RIGHT SIDE: CHECKOUT SIDEBAR COLUMN -->
+    <div class="sidebar-column">
+      <aside class="sidebar-checkout" aria-label="Booth Reservation Checkout">
+        <div class="checkout-title">
+          <h2 data-i18n="sidebar_title">Reserve Spot</h2>
+          <p data-i18n="sidebar_subtitle">Select an available booth on the layout to begin</p>
+        </div>
 
-      <!-- State 1: No booth selected -->
-      <div class="checkout-empty-state" id="checkout-empty">
-        <div class="checkout-empty-icon">📍</div>
-        <p data-i18n="checkout_empty_hint">Click on any light-colored booth (white, peach, green, blue) on the floor map to configure your registration.</p>
-      </div>
+        <!-- State 1: No booth selected -->
+        <div class="checkout-empty-state" id="checkout-empty">
+          <div class="checkout-empty-icon">📍</div>
+          <p data-i18n="checkout_empty_hint">Click on any light-colored booth (white, peach, green, blue) on the floor map to configure your registration.</p>
+        </div>
 
-      <!-- State 2: Booth selected -->
-      <div class="checkout-active-state" id="checkout-active" style="display: none;">
+        <!-- State 2: Booth selected -->
+        <div class="checkout-active-state" id="checkout-active" style="display: none;">
+          
+          <!-- Booth details display -->
+          <div class="details-card">
+            <div class="details-row">
+              <span class="details-label" data-i18n="label_selected_booth">Selected Booth</span>
+              <span class="details-value" id="disp-booth-id" style="font-size: 1.25rem; color: var(--color-booth-selected);">#--</span>
+            </div>
+            <div class="details-row">
+              <span class="details-label" data-i18n="label_category">Category</span>
+              <span class="badge" id="disp-booth-category" style="background: rgba(255,255,255,0.1);">--</span>
+            </div>
+            <div class="details-row">
+              <span class="details-label" data-i18n="label_dimensions">Dimensions</span>
+              <span class="details-value" id="disp-booth-dimensions">20' x 30'</span>
+            </div>
+          </div>
+
+          <!-- Payment option selector (For Food and Boba where Deposit != Full) -->
+          <div class="payment-type-selector" id="payment-options-block">
+            <span class="payment-type-label" data-i18n="label_payment_amount">Select Payment Amount</span>
+            <div class="payment-options">
+              <!-- Option A: Deposit -->
+              <button class="payment-option-btn selected" id="btn-pay-deposit" type="button">
+                <span class="payment-option-title" data-i18n="payment_option_deposit">Pay Deposit</span>
+                <span class="payment-option-price" id="price-deposit">$0</span>
+              </button>
+              <!-- Option B: Full Registration -->
+              <button class="payment-option-btn" id="btn-pay-full" type="button">
+                <span class="payment-option-title" data-i18n="payment_option_full">Full Registration</span>
+                <span class="payment-option-price" id="price-full">$0</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Fixed Price Display (For General and Fruits where Deposit = Full) -->
+          <div class="payment-type-selector" id="fixed-price-block" style="display: none;">
+            <span class="payment-type-label" data-i18n="payment_fixed_title">Registration Fee</span>
+            <div class="payment-option-btn selected" style="cursor: default; width: 100%; align-items: center; padding: 14px;">
+              <span class="payment-option-title" style="color: var(--color-primary-hover); font-size: 0.8rem; font-weight: 700;" data-i18n="payment_fixed_full">Full Registration Fee</span>
+              <span class="payment-option-price" id="disp-fixed-price" style="font-size: 1.3rem; font-weight: 800; margin-top: 4px;">$0</span>
+            </div>
+          </div>
+
+          <!-- Customer Form details -->
+          <form class="booking-form" id="form-booking" onsubmit="return false;">
+            <div class="form-group">
+              <label for="input-name" data-i18n="label_contact_name">Contact Full Name *</label>
+              <input type="text" id="input-name" class="form-control" placeholder="John Doe" data-i18n-placeholder="placeholder_name" required>
+            </div>
+            <div class="form-group">
+              <label for="input-email" data-i18n="label_email">Email Address *</label>
+              <input type="email" id="input-email" class="form-control" placeholder="johndoe@example.com" data-i18n-placeholder="placeholder_email" required>
+            </div>
+            <div class="form-group">
+              <label for="input-phone" data-i18n="label_phone">Phone Number *</label>
+              <input type="tel" id="input-phone" class="form-control" placeholder="(555) 000-0000" data-i18n-placeholder="placeholder_phone" required>
+            </div>
+            <div class="form-group">
+              <label for="input-business" data-i18n="label_business">Business / Vendor Name *</label>
+              <input type="text" id="input-business" class="form-control" placeholder="ABC Merchandise Co." data-i18n-placeholder="placeholder_business" required>
+            </div>
+
+            <!-- Payment Method Selector & Containers -->
+            <div class="form-group" style="margin-top: 10px;">
+              <label data-i18n="label_payment_method">Payment Method</label>
+              <div class="payment-method-selector">
+                <button type="button" class="pay-method-btn active" id="btn-pay-paypal">PayPal</button>
+                <button type="button" class="pay-method-btn" id="btn-pay-stripe">Stripe (Card)</button>
+              </div>
+            </div>
+
+            <!-- PayPal Wrapper -->
+            <div id="wrapper-pay-paypal" style="display: block; margin-top: 12px;">
+              <div id="paypal-button-container"></div>
+            </div>
+
+            <!-- Stripe Wrapper -->
+            <div id="wrapper-pay-stripe" style="display: none; margin-top: 12px;">
+              <div class="stripe-card-form">
+                <div class="form-group">
+                  <label for="input-stripe-card" data-i18n="label_stripe_card_number">Card Number *</label>
+                  <input type="text" id="input-stripe-card" class="form-control" placeholder="4111 2222 3333 4444" maxlength="19">
+                </div>
+                <div class="form-row" style="display: flex; gap: 12px;">
+                  <div class="form-group" style="flex: 1;">
+                    <label for="input-stripe-expiry" data-i18n="label_stripe_card_expiry">Expiry (MM/YY) *</label>
+                    <input type="text" id="input-stripe-expiry" class="form-control" placeholder="12/28" maxlength="5">
+                  </div>
+                  <div class="form-group" style="flex: 1;">
+                    <label for="input-stripe-cvc" data-i18n="label_stripe_card_cvc">CVC *</label>
+                    <input type="text" id="input-stripe-cvc" class="form-control" placeholder="123" maxlength="4">
+                  </div>
+                </div>
+                <button type="button" class="stripe-pay-btn" id="btn-stripe-pay">
+                  <span id="stripe-pay-btn-text" data-i18n="btn_pay_stripe">Pay with Card</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Sandbox Test mode bypass button -->
+            <button class="test-bypass-btn" id="btn-test-bypass" type="button" data-i18n="btn_bypass_test">
+              ⚡ Skip Payment (Test Booking)
+            </button>
+          </form>
+
+        </div>
         
-        <!-- Booth details display -->
-        <div class="details-card">
-          <div class="details-row">
-            <span class="details-label" data-i18n="label_selected_booth">Selected Booth</span>
-            <span class="details-value" id="disp-booth-id" style="font-size: 1.25rem; color: var(--color-booth-selected);">#--</span>
-          </div>
-          <div class="details-row">
-            <span class="details-label" data-i18n="label_category">Category</span>
-            <span class="badge" id="disp-booth-category" style="background: rgba(255,255,255,0.1);">--</span>
-          </div>
-          <div class="details-row">
-            <span class="details-label" data-i18n="label_dimensions">Dimensions</span>
-            <span class="details-value" id="disp-booth-dimensions">20' x 30'</span>
-          </div>
+        <!-- Lookup reservation footer link -->
+        <div class="sidebar-lookup-footer" style="margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border-color); text-align: center;">
+          <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0;">
+            <span data-i18n="link_lookup_prefix">Already reserved?</span> <a href="#" id="link-lookup-booking" style="color: #60a5fa; text-decoration: none; font-weight: 600;" data-i18n="link_lookup_action">Look Up / Pay Balance</a>
+          </p>
         </div>
+      </aside>
 
-        <!-- Payment option selector (For Food and Boba where Deposit != Full) -->
-        <div class="payment-type-selector" id="payment-options-block">
-          <span class="payment-type-label" data-i18n="label_payment_amount">Select Payment Amount</span>
-          <div class="payment-options">
-            <!-- Option A: Deposit -->
-            <button class="payment-option-btn selected" id="btn-pay-deposit" type="button">
-              <span class="payment-option-title" data-i18n="payment_option_deposit">Pay Deposit</span>
-              <span class="payment-option-price" id="price-deposit">$0</span>
-            </button>
-            <!-- Option B: Full Registration -->
-            <button class="payment-option-btn" id="btn-pay-full" type="button">
-              <span class="payment-option-title" data-i18n="payment_option_full">Full Registration</span>
-              <span class="payment-option-price" id="price-full">$0</span>
-            </button>
+      <!-- EVENT LOCATION SECTION -->
+      <div class="location-container">
+        <div class="location-card" id="location-map-card">
+          <div class="location-header">
+            <span class="location-icon">🗺️</span>
+            <div class="location-title">
+              <h3 data-i18n="location_directions_title">Event Location & Venue Directions</h3>
+              <p data-i18n="location_directions_subtitle">View the venue location on Google Maps / Satellite view</p>
+            </div>
           </div>
-        </div>
-
-        <!-- Fixed Price Display (For General and Fruits where Deposit = Full) -->
-        <div class="payment-type-selector" id="fixed-price-block" style="display: none;">
-          <span class="payment-type-label" data-i18n="payment_fixed_title">Registration Fee</span>
-          <div class="payment-option-btn selected" style="cursor: default; width: 100%; align-items: center; padding: 14px;">
-            <span class="payment-option-title" style="color: var(--color-primary-hover); font-size: 0.8rem; font-weight: 700;" data-i18n="payment_fixed_full">Full Registration Fee</span>
-            <span class="payment-option-price" id="disp-fixed-price" style="font-size: 1.3rem; font-weight: 800; margin-top: 4px;">$0</span>
+          <div class="location-map-wrapper">
+            <iframe 
+              src="https://maps.google.com/maps?q=24283+N+Hwy+244,Summers,AR+72769&t=k&z=17&output=embed" 
+              width="100%" 
+              height="280" 
+              style="border:0;" 
+              allowfullscreen="" 
+              loading="lazy">
+            </iframe>
           </div>
-        </div>
-
-        <!-- Customer Form details -->
-        <form class="booking-form" id="form-booking" onsubmit="return false;">
-          <div class="form-group">
-            <label for="input-name" data-i18n="label_contact_name">Contact Full Name *</label>
-            <input type="text" id="input-name" class="form-control" placeholder="John Doe" data-i18n-placeholder="placeholder_name" required>
+          <div class="location-details" style="display: flex; flex-direction: column; gap: 10px; padding: 4px 0;">
+            <p style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 8px;">
+              <span>📍</span> <span data-i18n="location_address">Address:</span> <span style="font-weight: normal; color: var(--text-secondary);">24283 N Hwy 244, Summers, AR 72769</span>
+            </p>
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 4px;">
+              <a href="https://www.google.com/maps/dir/?api=1&destination=24283+N+Hwy+244,Summers,AR+72769" 
+                 target="_blank" 
+                 class="btn-primary" 
+                 style="text-align: center; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; font-size: 0.9rem; font-weight: 600; border-radius: var(--border-radius-md); box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25);"
+                 data-i18n="btn_directions">
+                🚗 Get Directions
+              </a>
+              <a href="https://maps.google.com/maps?q=24283+N+Hwy+244,Summers,AR+72769" 
+                 target="_blank" 
+                 class="btn-secondary" 
+                 style="text-align: center; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; font-size: 0.9rem; font-weight: 600; border-radius: var(--border-radius-md);"
+                 data-i18n="btn_open_gmaps">
+                🌐 Open in Google Maps
+              </a>
+            </div>
           </div>
-          <div class="form-group">
-            <label for="input-email" data-i18n="label_email">Email Address *</label>
-            <input type="email" id="input-email" class="form-control" placeholder="johndoe@example.com" data-i18n-placeholder="placeholder_email" required>
-          </div>
-          <div class="form-group">
-            <label for="input-phone" data-i18n="label_phone">Phone Number *</label>
-            <input type="tel" id="input-phone" class="form-control" placeholder="(555) 000-0000" data-i18n-placeholder="placeholder_phone" required>
-          </div>
-          <div class="form-group">
-            <label for="input-business" data-i18n="label_business">Business / Vendor Name *</label>
-            <input type="text" id="input-business" class="form-control" placeholder="ABC Merchandise Co." data-i18n-placeholder="placeholder_business" required>
-          </div>
-
-          <!-- PayPal checkout integration container -->
-          <div class="form-group" style="margin-top: 10px;">
-            <label data-i18n="label_payment_method">Payment Method</label>
-            <div id="paypal-button-container"></div>
-          </div>
-
-          <!-- Sandbox Test mode bypass button -->
-          <button class="test-bypass-btn" id="btn-test-bypass" type="button" data-i18n="btn_bypass_test">
-            ⚡ Skip Payment (Test Booking)
-          </button>
-        </form>
-
-      </div>
-      
-      <!-- Lookup reservation footer link -->
-      <div class="sidebar-lookup-footer" style="margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border-color); text-align: center;">
-        <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0;">
-          <span data-i18n="link_lookup_prefix">Already reserved?</span> <a href="#" id="link-lookup-booking" style="color: #60a5fa; text-decoration: none; font-weight: 600;" data-i18n="link_lookup_action">Look Up / Pay Balance</a>
-        </p>
-      </div>
-    </aside>
-
-  </main>
-
-  <!-- EVENT LOCATION SECTION -->
-  <div class="location-container">
-    <div class="location-card" id="location-map-card">
-      <div class="location-header">
-        <span class="location-icon">🗺️</span>
-        <div class="location-title">
-          <h3 data-i18n="location_directions_title">Event Location & Venue Directions</h3>
-          <p data-i18n="location_directions_subtitle">View the venue location on Google Maps / Satellite view</p>
-        </div>
-      </div>
-      <div class="location-map-wrapper">
-        <iframe 
-          src="https://maps.google.com/maps?q=24283+N+Hwy+244,Summers,AR+72769&t=k&z=17&output=embed" 
-          width="100%" 
-          height="280" 
-          style="border:0;" 
-          allowfullscreen="" 
-          loading="lazy">
-        </iframe>
-      </div>
-      <div class="location-details" style="display: flex; flex-direction: column; gap: 10px; padding: 4px 0;">
-        <p style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 8px;">
-          <span>📍</span> <span data-i18n="location_address">Address:</span> <span style="font-weight: normal; color: var(--text-secondary);">24283 N Hwy 244, Summers, AR 72769</span>
-        </p>
-        <div style="display: flex; gap: 12px; margin-top: 4px;">
-          <a href="https://www.google.com/maps/dir/?api=1&destination=24283+N+Hwy+244,Summers,AR+72769" 
-             target="_blank" 
-             class="btn-primary" 
-             style="text-align: center; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; font-size: 0.9rem; font-weight: 600; border-radius: var(--border-radius-md); box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25);"
-             data-i18n="btn_directions">
-            🚗 Get Directions
-          </a>
-          <a href="https://maps.google.com/maps?q=24283+N+Hwy+244,Summers,AR+72769" 
-             target="_blank" 
-             class="btn-secondary" 
-             style="text-align: center; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; font-size: 0.9rem; font-weight: 600; border-radius: var(--border-radius-md);"
-             data-i18n="btn_open_gmaps">
-            🌐 Open in Google Maps
-          </a>
         </div>
       </div>
     </div>
-  </div>
+
+  </main>
 
   <!-- RECEIPT MODAL OVERLAY -->
   <div class="modal-overlay" id="modal-receipt">
@@ -322,6 +355,10 @@
             <div class="receipt-row">
               <span class="receipt-label" data-i18n="receipt_label_pay_mode">Payment Mode</span>
               <span class="receipt-value" id="rec-pay-mode">--</span>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-label" data-i18n="receipt_label_payment_method">Payment Method</span>
+              <span class="receipt-value" id="rec-payment-method">--</span>
             </div>
             <div class="receipt-row">
               <span class="receipt-label" data-i18n="receipt_label_txid">Transaction ID</span>
@@ -399,6 +436,7 @@
                 <th data-i18n="admin_th_phone">Phone Number</th>
                 <th style="width: 110px;" data-i18n="admin_th_price">Price Paid</th>
                 <th data-i18n="admin_th_mode">Payment Mode</th>
+                <th data-i18n="admin_th_paymethod">Payment Method</th>
                 <th data-i18n="admin_th_date">Date & Time</th>
                 <th data-i18n="admin_th_txid">Transaction ID</th>
               </tr>
@@ -477,7 +515,7 @@
         </div>
 
         <!-- Error state -->
-        <div id="lookup-error" class="lookup-alert-error" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 14px; border-radius: var(--border-radius-md); font-size: 0.85rem; line-height: 1.4; margin-top: 16px;" data-i18n="lookup_error">
+        <div id="lookup-error" class="lookup-alert-error" style="display: none; background: #fef2f2; border: 1px solid #ef4444; color: #991b1b; padding: 14px; border-radius: var(--border-radius-md); font-size: 0.85rem; line-height: 1.4; margin-top: 16px;" data-i18n="lookup_error">
           ❌ No reservation matching those details was found. Please check your spelling and try again.
         </div>
 
@@ -516,15 +554,45 @@
 
           <!-- Balance Due Payment Section -->
           <div id="lookup-balance-due-section" style="display: none; border-top: 1px dashed var(--border-color); padding-top: 16px; display: flex; flex-direction: column; gap: 12px;">
-            <div style="background: rgba(217, 119, 6, 0.15); border: 1px solid rgba(217, 119, 6, 0.3); color: #fcd34d; padding: 14px; border-radius: var(--border-radius-md); font-size: 0.85rem; line-height: 1.4;">
-              ⚠️ <strong data-i18n="lookup_balance_due_label">Balance Due:</strong> <strong><span id="lookup-balance-amount">$0</span></strong>
-              <p style="font-size: 0.8rem; margin-top: 4px; color: rgba(252, 211, 77, 0.85);" data-i18n="lookup_balance_note">You previously paid the deposit. The remaining registration balance must be paid to secure your reserved booth.</p>
+            <div style="background: #fffbeb; border: 1px solid #f59e0b; color: #b45309; padding: 14px; border-radius: var(--border-radius-md); font-size: 0.85rem; line-height: 1.4;">
+              ⚠️ <strong data-i18n="lookup_balance_due_label">Balance Due:</strong> <strong><span id="lookup-balance-amount" style="color: #b45309;">$0</span></strong>
+              <p style="font-size: 0.8rem; margin-top: 4px; color: #78350f;" data-i18n="lookup_balance_note">You previously paid the deposit. The remaining registration balance must be paid to secure your reserved booth.</p>
             </div>
             
             <div class="form-group" style="margin-top: 4px;">
               <label data-i18n="lookup_label_payment_method">Select Payment Method</label>
-              <!-- PayPal Balance Button container -->
-              <div id="paypal-balance-button-container" style="margin-top: 8px;"></div>
+              <div class="payment-method-selector" style="margin-bottom: 12px;">
+                <button type="button" class="pay-method-btn active" id="btn-balance-paypal">PayPal</button>
+                <button type="button" class="pay-method-btn" id="btn-balance-stripe">Stripe (Card)</button>
+              </div>
+              
+              <!-- PayPal Balance Wrapper -->
+              <div id="wrapper-balance-paypal" style="display: block;">
+                <div id="paypal-balance-button-container" style="margin-top: 8px;"></div>
+              </div>
+
+              <!-- Stripe Balance Wrapper -->
+              <div id="wrapper-balance-stripe" style="display: none;">
+                <div class="stripe-card-form">
+                  <div class="form-group">
+                    <label for="input-balance-card" data-i18n="label_stripe_card_number">Card Number *</label>
+                    <input type="text" id="input-balance-card" class="form-control" placeholder="4111 2222 3333 4444" maxlength="19">
+                  </div>
+                  <div class="form-row" style="display: flex; gap: 12px;">
+                    <div class="form-group" style="flex: 1;">
+                      <label for="input-balance-expiry" data-i18n="label_stripe_card_expiry">Expiry (MM/YY) *</label>
+                      <input type="text" id="input-balance-expiry" class="form-control" placeholder="12/28" maxlength="5">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                      <label for="input-balance-cvc" data-i18n="label_stripe_card_cvc">CVC *</label>
+                      <input type="text" id="input-balance-cvc" class="form-control" placeholder="123" maxlength="4">
+                    </div>
+                  </div>
+                  <button type="button" class="stripe-pay-btn" id="btn-stripe-balance-pay">
+                    <span id="stripe-balance-pay-btn-text" data-i18n="btn_pay_balance_stripe">Pay Balance with Card</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
             <!-- TEMP: Test bypass button (Remove before production) -->
@@ -535,9 +603,9 @@
         </div>
 
         <!-- Success Payment State -->
-        <div id="lookup-success" style="display: none; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #a7f3d0; padding: 16px; border-radius: var(--border-radius-md); font-size: 0.85rem; line-height: 1.5; margin-top: 16px;">
+        <div id="lookup-success" style="display: none; background: #ecfdf5; border: 1px solid #10b981; color: #065f46; padding: 16px; border-radius: var(--border-radius-md); font-size: 0.85rem; line-height: 1.5; margin-top: 16px;">
           ✓ <strong data-i18n="lookup_success_title">Payment Successful!</strong>
-          <p style="font-size: 0.8rem; margin-top: 6px; color: rgba(167, 243, 208, 0.85);" data-i18n="lookup_success_msg">Your remaining balance has been paid in full and your reservation has been updated to **Fully Paid**. Thank you!</p>
+          <p style="font-size: 0.8rem; margin-top: 6px; color: #047857;" data-i18n="lookup_success_msg">Your remaining balance has been paid in full and your reservation has been updated to **Fully Paid**. Thank you!</p>
         </div>
       </div>
 

@@ -272,7 +272,7 @@ header {
   border: 2px solid var(--border-color);
   aspect-ratio: 1000 / 1050;
   width: 100%;
-  height: 100%;
+  height: auto;
   max-width: 100%;
   max-height: 100%;
   flex: none;
@@ -384,9 +384,20 @@ header {
   user-select: none;
 }
 
-/* --- RIGHT SIDE: SIDEBAR CHECKOUT --- */
-.sidebar-checkout {
+/* --- RIGHT SIDE: CHECKOUT SIDEBAR COLUMN --- */
+.sidebar-column {
   width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  height: 100%;
+  overflow-y: auto;
+  flex-shrink: 0;
+  scrollbar-width: thin;
+}
+
+.sidebar-checkout {
+  width: 100%;
   background: var(--bg-sidebar);
   border: 2px solid var(--border-color); /* Premium borders on all sides */
   border-radius: var(--border-radius-lg); /* Rounded card corners */
@@ -396,10 +407,8 @@ header {
   gap: 24px;
   z-index: 10;
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08); /* Clean drop shadow */
-  align-self: flex-start; /* Fit content height instead of stretching */
+  align-self: stretch; /* Stretch to fill sidebar column width */
   flex-shrink: 0;
-  max-height: 100%; /* Prevent sidebar from expanding past app container height */
-  overflow-y: auto; /* Enable vertical scroll if checkout form is taller than viewport */
 }
 
 .checkout-title h2 {
@@ -571,6 +580,94 @@ header {
 #paypal-button-container {
   margin-top: 10px;
   min-height: 45px;
+}
+
+/* Payment Method Selector & Toggle button group */
+.payment-method-selector {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: var(--border-radius-md);
+  padding: 4px;
+  border: 1px solid var(--border-color);
+  gap: 4px;
+}
+
+.pay-method-btn {
+  flex: 1;
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  padding: 8px 12px;
+  border-radius: calc(var(--border-radius-md) - 2px);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.pay-method-btn.active {
+  background: #ffffff;
+  color: var(--color-primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Stripe Card Form styling */
+.stripe-card-form {
+  background: #f8fafc;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stripe-card-form .form-group {
+  margin-bottom: 0;
+}
+
+.stripe-pay-btn {
+  background: var(--color-success);
+  color: #ffffff;
+  border: none;
+  padding: 12px;
+  border-radius: var(--border-radius-md);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.stripe-pay-btn:hover {
+  background: #15803d;
+}
+
+.stripe-pay-btn:disabled {
+  background: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Loading spinner */
+.stripe-pay-btn .spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* Test/Sandbox bypass button */
@@ -889,10 +986,16 @@ header {
     gap: 16px;
   }
   
+  .sidebar-column {
+    width: 100%;
+    height: auto;
+    overflow-y: visible;
+    gap: 16px;
+  }
+
   .sidebar-checkout {
     width: 100%;
     height: auto;
-    max-height: none; /* Crucial: removes max-height limit on mobile */
     align-self: stretch;
   }
   
@@ -903,16 +1006,24 @@ header {
   .map-board-wrapper {
     height: 550px;
     min-height: 550px;
+    display: block;
+  }
+
+  .map-canvas-wrapper {
+    width: 100%;
+    height: 502px;
+    aspect-ratio: auto;
+    margin: 0;
   }
   
   .location-container {
-    padding: 0 16px 16px 16px;
+    padding: 0;
   }
 }
 
 /* --- LOCATION CONTAINER --- */
 .location-container {
-  padding: 0 24px 24px 24px;
+  padding: 0;
   display: flex;
   justify-content: center;
   width: 100%;
