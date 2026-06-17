@@ -13,7 +13,7 @@ const CONFIG = {
   // Booth pricing and sizing categories
   categories: {
     General: {
-      name: "General/Marchise",
+      name: "General Merchandise",
       depositPrice: 350,
       fullPrice: 350,
       size: "20' x 30'",
@@ -66,74 +66,74 @@ const CONFIG = {
   // X, Y coordinates and Width/Height dimensions (for the SVG canvas)
   booths: [
     // --- NORTH ROW (Top, horizontal, left to right, numbered 39 down to 22) ---
-    { id: "39", category: "General", x: 50,  y: 60, w: 26, h: 42 },
-    { id: "38", category: "General", x: 78,  y: 60, w: 26, h: 42 },
-    { id: "37", category: "General", x: 106, y: 60, w: 26, h: 42 },
-    { id: "36", category: "General", x: 134, y: 60, w: 26, h: 42 },
-    { id: "35", category: "General", x: 162, y: 60, w: 26, h: 42 },
-    { id: "34", category: "General", x: 190, y: 60, w: 26, h: 42 },
-    { id: "33", category: "General", x: 218, y: 60, w: 26, h: 42 },
-    { id: "32", category: "General", x: 246, y: 60, w: 26, h: 42 },
-    { id: "31", category: "General", x: 274, y: 60, w: 26, h: 42 },
-    { id: "30", category: "Fruits",  x: 302, y: 60, w: 26, h: 42 },
-    { id: "29", category: "Fruits",  x: 330, y: 60, w: 26, h: 42 },
-    // Walkway Gap represented here visually (X range ~358 to ~428)
-    { id: "28", category: "Fruits",  x: 430, y: 60, w: 26, h: 42 },
-    { id: "27", category: "General", x: 458, y: 60, w: 26, h: 42 },
-    { id: "26", category: "General", x: 486, y: 60, w: 26, h: 42 },
-    { id: "25", category: "Fruits",  x: 514, y: 60, w: 26, h: 42 },
-    { id: "24", category: "General", x: 542, y: 60, w: 26, h: 42 },
-    { id: "23", category: "General", x: 570, y: 60, w: 26, h: 42 },
-    { id: "22", category: "Fruits",  x: 598, y: 60, w: 26, h: 42 },
+    { id: "39", category: "General", x: 66,  y: 60, w: 26, h: 42 },
+    { id: "38", category: "General", x: 96,  y: 60, w: 26, h: 42 },
+    { id: "37", category: "General", x: 126, y: 60, w: 26, h: 42 },
+    { id: "36", category: "General", x: 156, y: 60, w: 26, h: 42 },
+    { id: "35", category: "General", x: 186, y: 60, w: 26, h: 42 },
+    { id: "34", category: "General", x: 216, y: 60, w: 26, h: 42 },
+    { id: "33", category: "General", x: 246, y: 60, w: 26, h: 42 },
+    { id: "32", category: "General", x: 276, y: 60, w: 26, h: 42 },
+    { id: "31", category: "General", x: 306, y: 60, w: 26, h: 42 },
+    { id: "30", category: "Fruits",  x: 336, y: 60, w: 26, h: 42 },
+    { id: "29", category: "Fruits",  x: 366, y: 60, w: 26, h: 42 },
+    // Walkway Gap (60ft / 80 units wide, aligned with x: 392 to x: 472)
+    { id: "28", category: "Fruits",  x: 472, y: 60, w: 26, h: 42 },
+    { id: "27", category: "General", x: 502, y: 60, w: 26, h: 42 },
+    { id: "26", category: "General", x: 532, y: 60, w: 26, h: 42 },
+    { id: "25", category: "Fruits",  x: 562, y: 60, w: 26, h: 42 },
+    { id: "24", category: "General", x: 592, y: 60, w: 26, h: 42 },
+    { id: "23", category: "General", x: 622, y: 60, w: 26, h: 42 },
+    { id: "22", category: "Fruits",  x: 652, y: 60, w: 26, h: 42 },
 
     // --- WEST ROW (Left horizontal row, left to right, numbered 40 to 47) ---
-    { id: "40", category: "General", x: 50,  y: 160, w: 26, h: 42 },
-    { id: "41", category: "General", x: 78,  y: 160, w: 26, h: 42 },
-    { id: "42", category: "General", x: 106, y: 160, w: 26, h: 42 },
-    { id: "43", category: "General", x: 134, y: 160, w: 26, h: 42 },
-    { id: "44", category: "General", x: 162, y: 160, w: 26, h: 42 },
-    { id: "45", category: "General", x: 190, y: 160, w: 26, h: 42 },
-    { id: "46", category: "General", x: 218, y: 160, w: 26, h: 42 },
-    { id: "47", category: "General", x: 246, y: 160, w: 26, h: 42 },
+    { id: "40", category: "General", x: 66,  y: 160, w: 26, h: 42 },
+    { id: "41", category: "General", x: 96,  y: 160, w: 26, h: 42 },
+    { id: "42", category: "General", x: 126, y: 160, w: 26, h: 42 },
+    { id: "43", category: "General", x: 156, y: 160, w: 26, h: 42 },
+    { id: "44", category: "General", x: 186, y: 160, w: 26, h: 42 },
+    { id: "45", category: "General", x: 216, y: 160, w: 26, h: 42 },
+    { id: "46", category: "General", x: 246, y: 160, w: 26, h: 42 },
+    { id: "47", category: "General", x: 276, y: 160, w: 26, h: 42 },
 
     // --- MIDDLE COLUMN (Vertical column, top to bottom, numbered 48 to 57A) ---
-    { id: "48",  category: "General", x: 310, y: 220, w: 42, h: 26 },
-    { id: "49",  category: "General", x: 310, y: 248, w: 42, h: 26 },
-    { id: "50",  category: "General", x: 310, y: 276, w: 42, h: 26 },
-    { id: "51",  category: "General", x: 310, y: 304, w: 42, h: 26 },
-    { id: "52",  category: "General", x: 310, y: 332, w: 42, h: 26 },
-    { id: "53",  category: "General", x: 310, y: 360, w: 42, h: 26 },
-    { id: "54",  category: "General", x: 310, y: 388, w: 42, h: 26 },
-    { id: "55",  category: "General", x: 310, y: 416, w: 42, h: 26 },
-    { id: "56",  category: "General", x: 310, y: 444, w: 42, h: 26 },
-    { id: "57",  category: "Info",    x: 310, y: 472, w: 42, h: 18 }, // Smaller Height (10x10 ft)
-    { id: "57A", category: "Info",    x: 310, y: 492, w: 42, h: 18 }, // Smaller Height (10x10 ft)
+    { id: "48",  category: "General", x: 350, y: 220, w: 42, h: 26 },
+    { id: "49",  category: "General", x: 350, y: 250, w: 42, h: 26 },
+    { id: "50",  category: "General", x: 350, y: 280, w: 42, h: 26 },
+    { id: "51",  category: "General", x: 350, y: 310, w: 42, h: 26 },
+    { id: "52",  category: "General", x: 350, y: 340, w: 42, h: 26 },
+    { id: "53",  category: "General", x: 350, y: 370, w: 42, h: 26 },
+    { id: "54",  category: "General", x: 350, y: 400, w: 42, h: 26 },
+    { id: "55",  category: "General", x: 350, y: 430, w: 42, h: 26 },
+    { id: "56",  category: "General", x: 350, y: 460, w: 42, h: 26 },
+    { id: "57",  category: "Info",    x: 350, y: 490, w: 42, h: 14 }, // Proportional 10x10 ft
+    { id: "57A", category: "Info",    x: 350, y: 508, w: 42, h: 14 }, // Proportional 10x10 ft
 
     // --- EAST ROW (Right vertical column, top to bottom, numbered 21 down to 7) ---
-    { id: "21", category: "Boba",     x: 660, y: 120, w: 42, h: 26 },
-    { id: "20", category: "Food",     x: 660, y: 148, w: 42, h: 26 },
-    { id: "19", category: "Food",     x: 660, y: 176, w: 42, h: 26 },
-    { id: "18", category: "Boba",     x: 660, y: 204, w: 42, h: 26 },
-    { id: "17", category: "Food",     x: 660, y: 232, w: 42, h: 26 },
-    { id: "16", category: "Food",     x: 660, y: 260, w: 42, h: 26 },
-    { id: "15", category: "Food",     x: 660, y: 288, w: 42, h: 26 },
-    { id: "14", category: "Food",     x: 660, y: 316, w: 42, h: 26 },
-    { id: "13", category: "Boba",     x: 660, y: 344, w: 42, h: 26 },
-    { id: "12", category: "Food",     x: 660, y: 372, w: 42, h: 26 }, // Org pre-reserved (Food booth)
-    { id: "11", category: "Food",     x: 660, y: 400, w: 42, h: 26 },
-    { id: "10", category: "Food",     x: 660, y: 428, w: 42, h: 26 },
-    { id: "9",  category: "Food",     x: 660, y: 456, w: 42, h: 26 },
-    { id: "8",  category: "Food",     x: 660, y: 484, w: 42, h: 26 },
-    { id: "7",  category: "Boba",     x: 660, y: 512, w: 42, h: 26 },
+    { id: "21", category: "Boba",     x: 770, y: 120, w: 42, h: 26 },
+    { id: "20", category: "Food",     x: 770, y: 150, w: 42, h: 26 },
+    { id: "19", category: "Food",     x: 770, y: 180, w: 42, h: 26 },
+    { id: "18", category: "Food",     x: 770, y: 210, w: 42, h: 26 },
+    { id: "17", category: "Boba",     x: 770, y: 240, w: 42, h: 26 },
+    { id: "16", category: "Food",     x: 770, y: 270, w: 42, h: 26 },
+    { id: "15", category: "Food",     x: 770, y: 300, w: 42, h: 26 },
+    { id: "14", category: "Food",     x: 770, y: 330, w: 42, h: 26 },
+    { id: "13", category: "Boba",     x: 770, y: 360, w: 42, h: 26 },
+    { id: "12", category: "Food",     x: 770, y: 390, w: 42, h: 26 }, // Org pre-reserved (Food booth)
+    { id: "11", category: "Food",     x: 770, y: 420, w: 42, h: 26 },
+    { id: "10", category: "Boba",     x: 770, y: 450, w: 42, h: 26 },
+    { id: "9",  category: "General",  x: 770, y: 480, w: 42, h: 26 },
+    { id: "8",  category: "General",  x: 770, y: 510, w: 42, h: 26 },
+    { id: "7",  category: "General",  x: 770, y: 540, w: 42, h: 26 },
 
     // --- SOUTH ROW (Bottom horizontal, left to right, Info 1 (x2) & General 2 to 6) ---
-    { id: "1-L", category: "Info",    x: 450, y: 580, w: 26, h: 26 }, // Info 1 Left (10x10)
-    { id: "1-R", category: "Info",    x: 478, y: 580, w: 26, h: 26 }, // Info 1 Right (10x10)
+    { id: "1-L", category: "Info",    x: 476, y: 580, w: 13, h: 42 }, // Split 10x30 ft Info
+    { id: "1-R", category: "Info",    x: 489, y: 580, w: 13, h: 42 }, // Split 10x30 ft Info
     { id: "2",   category: "General", x: 506, y: 580, w: 26, h: 42 },
-    { id: "3",   category: "General", x: 534, y: 580, w: 26, h: 42 },
-    { id: "4",   category: "General", x: 562, y: 580, w: 26, h: 42 },
-    { id: "5",   category: "General", x: 590, y: 580, w: 26, h: 42 },
-    { id: "6",   category: "General", x: 618, y: 580, w: 26, h: 42 }
+    { id: "3",   category: "General", x: 536, y: 580, w: 26, h: 42 },
+    { id: "4",   category: "General", x: 566, y: 580, w: 26, h: 42 },
+    { id: "5",   category: "General", x: 596, y: 580, w: 26, h: 42 },
+    { id: "6",   category: "General", x: 626, y: 580, w: 26, h: 42 }
   ]
 };
 
@@ -141,7 +141,7 @@ const CONFIG = {
 let selectedBooth = null;       // Currently selected booth object
 let selectedPaymentMode = 'deposit'; // 'deposit' or 'full'
 let localReservations = {};     // Map of booked booths from localStorage
-const PRERESERVED_IDS = ["12"]; // Booths pre-reserved by the organizer
+const PRERESERVED_IDS = ["2", "3", "12", "28", "33", "47", "48", "49", "50", "53", "55", "57", "57A"]; // Booths pre-reserved by the organizer
 let currentZoom = 1.0;          // Floor plan zoom level (1.0 = 100%)
 
 // --- DOM ELEMENTS ---
@@ -407,10 +407,10 @@ function drawLandmarks(svg, svgNS) {
   }
 
   // Draw Central Tent
-  drawBox(430, 220, 180, 260, "Central Tent (50' x 100')");
+  drawBox(546, 280, 70, 140, "Central Tent (50' x 100')");
 
   // Draw Building
-  drawBox(180, 680, 160, 240, "Building (50' x 120')");
+  drawBox(225, 720, 70, 160, "Building (50' x 120')");
 
   // Draw Office & Storage
   drawBox(370, 780, 70, 50, "Office");
@@ -497,8 +497,8 @@ function drawLandmarks(svg, svgNS) {
     svg.appendChild(t);
   }
   
-  drawCompass(470, 25, "NORTH");
-  drawCompass(775, 320, "EAST"); // Moved EAST further right into the walkway center to avoid booth 9 overlap
+  drawCompass(430, 25, "NORTH");
+  drawCompass(930, 320, "EAST"); // Right of fence
   drawCompass(640, 990, "SOUTH");
   drawCompass(80, 380, "WEST"); // Moved WEST further left next to the entrance gate space
 

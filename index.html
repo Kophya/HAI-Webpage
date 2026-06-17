@@ -25,7 +25,7 @@
       </div>
       <div class="brand-text">
         <h1 id="brand-title">Hmong Association, Inc</h1>
-        <p id="brand-subtitle">Arkansas Merchandise/Vendors Layout & Reservations</p>
+        <p id="brand-subtitle">Arkansas Merchandise/Vendors Layout & Reservations <span style="color: #ef4444; font-weight: 700; margin-left: 8px;">(Note: Dimensions and layout are not to scale)</span></p>
       </div>
     </div>
     <div class="header-actions">
@@ -45,7 +45,7 @@
       <!-- Interactive Legend -->
       <div class="legend-card">
         <div class="legend-items">
-          <div class="legend-item" title="General Merchant/Marchise booths ($350)">
+          <div class="legend-item" title="General Merchandise booths ($350)">
             <div class="legend-color color-general"></div>
             <span>General ($350)</span>
           </div>
@@ -211,18 +211,32 @@
         </div>
       </div>
       <div class="location-map-wrapper">
-        <!-- 
-          TO INTEGRATE GOOGLE MAPS/EARTH LATER:
-          1. Go to maps.google.com and search for your venue location.
-          2. Click "Share" -> Select "Embed a map" tab.
-          3. Copy the HTML <iframe> tag.
-          4. Replace the placeholder div block below (<div class="map-placeholder">...</div>) with your copied <iframe> tag.
-          5. Ensure the iframe has: width="100%" height="250" style="border:0;" loading="lazy"
-        -->
-        <div class="map-placeholder">
-          <span class="map-placeholder-icon">📍</span>
-          <p style="font-weight: 700; font-size: 0.95rem; color: var(--text-primary);">Google Maps / Google Earth Satellite View Placeholder</p>
-          <span class="map-placeholder-hint">To display your real venue location map, open index.html and paste your Google Maps iframe code inside the "location-map-wrapper" container.</span>
+        <iframe 
+          src="https://maps.google.com/maps?q=24283+N+Hwy+244,Summers,AR+72769&t=k&z=17&output=embed" 
+          width="100%" 
+          height="280" 
+          style="border:0;" 
+          allowfullscreen="" 
+          loading="lazy">
+        </iframe>
+      </div>
+      <div class="location-details" style="display: flex; flex-direction: column; gap: 10px; padding: 4px 0;">
+        <p style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 8px;">
+          <span>📍</span> Address: <span style="font-weight: normal; color: var(--text-secondary);">24283 N Hwy 244, Summers, AR 72769</span>
+        </p>
+        <div style="display: flex; gap: 12px; margin-top: 4px;">
+          <a href="https://www.google.com/maps/dir/?api=1&destination=24283+N+Hwy+244,Summers,AR+72769" 
+             target="_blank" 
+             class="btn-primary" 
+             style="text-align: center; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; font-size: 0.9rem; font-weight: 600; border-radius: var(--border-radius-md); box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25);">
+            🚗 Get Directions
+          </a>
+          <a href="https://maps.google.com/maps?q=24283+N+Hwy+244,Summers,AR+72769" 
+             target="_blank" 
+             class="btn-secondary" 
+             style="text-align: center; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; font-size: 0.9rem; font-weight: 600; border-radius: var(--border-radius-md);">
+            🌐 Open in Google Maps
+          </a>
         </div>
       </div>
     </div>

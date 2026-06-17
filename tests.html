@@ -413,14 +413,14 @@
         fn: async () => {
           const { win, doc } = getApp();
           
-          // Simulate selecting booth 2 (General)
-          const rect = doc.querySelector('rect.svg-booth[x="506"]'); // Booth 2 config coordinates
-          assert(rect !== null, "Could not locate Booth 2 SVG rectangle in the DOM");
+          // Simulate selecting booth 4 (General)
+          const rect = doc.querySelector('rect.svg-booth[x="566"]'); // Booth 4 config coordinates
+          assert(rect !== null, "Could not locate Booth 4 SVG rectangle in the DOM");
           
           rect.dispatchEvent(new MouseEvent('click'));
           
           assert(win.selectedBooth !== null, "App state selectedBooth remains null after click");
-          assert(win.selectedBooth.id === "2", `Expected booth ID 2, got ${win.selectedBooth.id}`);
+          assert(win.selectedBooth.id === "4", `Expected booth ID 4, got ${win.selectedBooth.id}`);
           
           // Verify Checkout Panel State
           assert(doc.getElementById('checkout-empty').style.display === "none", "Checkout empty state panel is still visible");
@@ -439,7 +439,7 @@
           const { win, doc } = getApp();
           
           // Select a booth first to show panel
-          const rect = doc.querySelector('rect.svg-booth[x="506"]');
+          const rect = doc.querySelector('rect.svg-booth[x="566"]');
           rect.dispatchEvent(new MouseEvent('click'));
           
           // Initial form is blank, validation should fail
@@ -475,9 +475,9 @@
           win.loadReservations();
           win.renderMap();
           
-          // Select Booth 3 (General)
-          const rect = doc.querySelector('rect.svg-booth[x="534"]'); // Booth 3 config coordinates
-          assert(rect !== null, "Could not locate Booth 3 SVG rectangle");
+          // Select Booth 5 (General)
+          const rect = doc.querySelector('rect.svg-booth[x="596"]'); // Booth 5 config coordinates
+          assert(rect !== null, "Could not locate Booth 5 SVG rectangle");
           rect.dispatchEvent(new MouseEvent('click'));
           
           // Populate form fields
@@ -497,14 +497,14 @@
           
           // Verify receipt contents
           assert(doc.getElementById('rec-business').textContent === "Bob's Crafts LLC", "Receipt did not map business name correctly");
-          assert(doc.getElementById('rec-booth-id').textContent === "#3", "Receipt did not map booth number correctly");
+          assert(doc.getElementById('rec-booth-id').textContent === "#5", "Receipt did not map booth number correctly");
           assert(doc.getElementById('rec-total-paid').textContent === "$350", "Receipt did not map payment amount correctly");
           
           // Verify localStorage storage
           const bookings = JSON.parse(win.localStorage.getItem('hai_booth_bookings'));
           assert(bookings !== null, "Bookings failed to write to browser localStorage");
-          assert(bookings["3"] !== undefined, "Booth #3 reservation was not saved in local reservations mapping");
-          assert(bookings["3"].name === "Tester Bob", "Local storage booking data is corrupted");
+          assert(bookings["5"] !== undefined, "Booth #5 reservation was not saved in local reservations mapping");
+          assert(bookings["5"].name === "Tester Bob", "Local storage booking data is corrupted");
         }
       },
       {
