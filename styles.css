@@ -1354,6 +1354,30 @@ header {
   padding-right: 4px;
 }
 
+.lookup-tab-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 10px;
+  flex: 1;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.lookup-tab-btn:hover {
+  color: var(--text-primary);
+}
+
+.lookup-tab-btn.active {
+  color: var(--color-primary-hover);
+  border-bottom-color: var(--color-primary-hover);
+  font-weight: 700;
+}
+
 /* Hide lookup modal components when printing if they are not relevant */
 @media print {
   .modal-overlay.active .lookup-modal,

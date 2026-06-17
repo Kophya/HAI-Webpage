@@ -150,6 +150,7 @@ const PRERESERVED_IDS = ["2", "3", "12", "28", "33", "47", "48", "49", "50", "53
 let currentZoom = 1.0;          // Floor plan zoom level (1.0 = 100%)
 
 let currentLang = 'en';         // Active language: 'en' or 'hm'
+let activeLookupTab = 'txid';   // Active lookup modal tab: 'txid' or 'details'
 
 const TRANSLATIONS = {
   en: {
@@ -246,7 +247,9 @@ const TRANSLATIONS = {
     
     // Lookup Modal
     lookup_title: "Look Up Reservation",
-    lookup_subtitle: "Search by registered email and transaction ID to pay remaining balance",
+    lookup_subtitle: "Search by transaction ID or contact details with registered email to pay remaining balance",
+    lookup_tab_txid: "Search by Transaction ID",
+    lookup_tab_details: "Search by Contact Info",
     lookup_label_email: "Registered Email Address *",
     lookup_label_txid: "Original Transaction ID *",
     lookup_placeholder_txid: "MOCK-PAY-XXXXXX or PAYID-XXXXXX",
@@ -395,7 +398,9 @@ const TRANSLATIONS = {
     
     // Lookup Modal
     lookup_title: "Nrhiav Kev Ceev Chaw",
-    lookup_subtitle: "Nrhiav raws email sau npe thiab tus ID them nyiaj txhawm rau them nqe tshuav",
+    lookup_subtitle: "Nrhiav raws li tus ID them nyiaj lossis neeg cov ntaub ntawv nrog email sau npe txhawm rau them nqe tshuav",
+    lookup_tab_txid: "Nrhiav raws li Tus ID Them Nyiaj",
+    lookup_tab_details: "Nrhiav raws li Kev Hais Npe",
     lookup_label_email: "Email Sau Npe *",
     lookup_label_txid: "Tus ID Them Nyiaj Ua Ntej *",
     lookup_placeholder_txid: "MOCK-PAY-XXXXXX lossis PAYID-XXXXXX",
@@ -491,6 +496,38 @@ function setLanguage(lang) {
 
   updateLookupModalTranslation();
   renderMap();
+}
+
+function switchLookupTab(tab) {
+  activeLookupTab = tab;
+  
+  const btnTabTxid = document.getElementById('btn-tab-txid');
+  const btnTabDetails = document.getElementById('btn-tab-details');
+  const groupLookupTxid = document.getElementById('group-lookup-txid');
+  const groupLookupDetails = document.getElementById('group-lookup-details');
+  const inputLookupTxid = document.getElementById('input-lookup-txid');
+  const inputLookupName = document.getElementById('input-lookup-name');
+  const inputLookupPhone = document.getElementById('input-lookup-phone');
+  
+  if (tab === 'txid') {
+    if (btnTabTxid) btnTabTxid.classList.add('active');
+    if (btnTabDetails) btnTabDetails.classList.remove('active');
+    if (groupLookupTxid) groupLookupTxid.style.display = 'block';
+    if (groupLookupDetails) groupLookupDetails.style.display = 'none';
+    
+    if (inputLookupTxid) inputLookupTxid.required = true;
+    if (inputLookupName) inputLookupName.required = false;
+    if (inputLookupPhone) inputLookupPhone.required = false;
+  } else {
+    if (btnTabTxid) btnTabTxid.classList.remove('active');
+    if (btnTabDetails) btnTabDetails.classList.add('active');
+    if (groupLookupTxid) groupLookupTxid.style.display = 'none';
+    if (groupLookupDetails) groupLookupDetails.style.display = 'flex';
+    
+    if (inputLookupTxid) inputLookupTxid.required = false;
+    if (inputLookupName) inputLookupName.required = true;
+    if (inputLookupPhone) inputLookupPhone.required = true;
+  }
 }
 
 function updateLookupModalTranslation() {
@@ -1302,6 +1339,20 @@ function setupEventListeners() {
   const formLookup = document.getElementById('form-lookup');
   const inputLookupEmail = document.getElementById('input-lookup-email');
   const inputLookupTxid = document.getElementById('input-lookup-txid');
+  const btnTabTxid = document.getElementById('btn-tab-txid');
+  const btnTabDetails = document.getElementById('btn-tab-details');
+
+  if (btnTabTxid) {
+    btnTabTxid.addEventListener('click', () => {
+      switchLookupTab('txid');
+    });
+  }
+
+  if (btnTabDetails) {
+    btnTabDetails.addEventListener('click', () => {
+      switchLookupTab('details');
+    });
+  }
 
   if (linkLookup) {
     linkLookup.addEventListener('click', (e) => {
@@ -1309,6 +1360,13 @@ function setupEventListeners() {
       // Reset lookup search fields and results states
       if (inputLookupEmail) inputLookupEmail.value = '';
       if (inputLookupTxid) inputLookupTxid.value = '';
+      const inputLookupName = document.getElementById('input-lookup-name');
+      const inputLookupPhone = document.getElementById('input-lookup-phone');
+      if (inputLookupName) inputLookupName.value = '';
+      if (inputLookupPhone) inputLookupPhone.value = '';
+      
+      switchLookupTab('txid');
+      
       document.getElementById('lookup-loading').style.display = 'none';
       document.getElementById('lookup-error').style.display = 'none';
       document.getElementById('lookup-results').style.display = 'none';
@@ -1330,8 +1388,14 @@ function setupEventListeners() {
     formLookup.addEventListener('submit', (e) => {
       e.preventDefault();
       const email = inputLookupEmail.value.trim();
-      const txid = inputLookupTxid.value.trim();
-      performLookup(email, txid);
+      if (activeLookupTab === 'txid') {
+        const txid = inputLookupTxid.value.trim();
+        performLookup(email, txid);
+      } else {
+        const name = document.getElementById('input-lookup-name').value.trim();
+        const phone = document.getElementById('input-lookup-phone').value.trim();
+        performLookup(email, null, name, phone);
+      }
     });
   }
 }
@@ -1627,7 +1691,7 @@ function exportCSV() {
 }
 
 // --- RESERVATION LOOKUP & BALANCE PAYMENT FLOW ---
-async function performLookup(email, transactionId) {
+async function performLookup(email, transactionId, name, phone) {
   const loading = document.getElementById('lookup-loading');
   const errorAlert = document.getElementById('lookup-error');
   const resultsDiv = document.getElementById('lookup-results');
@@ -1642,8 +1706,14 @@ async function performLookup(email, transactionId) {
   if (form) form.style.display = 'none';
 
   try {
-    // Perform case-insensitive search by email and substring match by transaction_id in Supabase
-    const response = await fetch(`${CONFIG.supabaseUrl}/rest/v1/bookings?email=ilike.${encodeURIComponent(email)}&transaction_id=ilike.*${encodeURIComponent(transactionId)}*`, {
+    let queryUrl = `${CONFIG.supabaseUrl}/rest/v1/bookings?email=ilike.${encodeURIComponent(email)}`;
+    if (transactionId) {
+      queryUrl += `&transaction_id=ilike.*${encodeURIComponent(transactionId)}*`;
+    } else {
+      queryUrl += `&contact_name=ilike.*${encodeURIComponent(name)}*&phone=ilike.*${encodeURIComponent(phone)}*`;
+    }
+
+    const response = await fetch(queryUrl, {
       method: 'GET',
       headers: {
         'apikey': CONFIG.supabaseKey,
@@ -1656,7 +1726,10 @@ async function performLookup(email, transactionId) {
       if (loading) loading.style.display = 'none';
 
       if (data.length === 0) {
-        if (errorAlert) errorAlert.style.display = 'block';
+        if (errorAlert) {
+          errorAlert.textContent = t('lookup_error');
+          errorAlert.style.display = 'block';
+        }
         if (form) form.style.display = 'flex';
         return;
       }
@@ -1664,68 +1737,7 @@ async function performLookup(email, transactionId) {
       // Found active reservation entry
       const row = data[0];
       if (resultsDiv) resultsDiv.style.display = 'flex';
-
-      // Map row parameters to lookup results UI
-      document.getElementById('lookup-res-business').textContent = row.business_name || '--';
-      document.getElementById('lookup-res-name').textContent = row.contact_name || '--';
-      
-      let dispId = row.booth_id;
-      if (row.booth_id === "1-L" || row.booth_id === "1-R") dispId = "1";
-      document.getElementById('lookup-res-booth').textContent = `#${dispId}`;
-      let catTextTranslated = row.booth_category || '--';
-      const catKeys = ['General', 'Food', 'Boba', 'Fruits', 'Info', 'Reserved'];
-      for (const key of catKeys) {
-        if (catTextTranslated === CONFIG.categories[key].name) {
-          catTextTranslated = t(`cat_${key.toLowerCase()}`);
-          break;
-        }
-      }
-      document.getElementById('lookup-res-category').textContent = catTextTranslated;
-      document.getElementById('lookup-res-paid').textContent = row.price_paid || '--';
-
-      const statusBadge = document.getElementById('lookup-res-status');
-      const balanceSection = document.getElementById('lookup-balance-due-section');
-
-      // Check reservation payment status
-      if (row.payment_mode === "Full Registration Fee") {
-        statusBadge.textContent = t('lookup_status_paid');
-        statusBadge.style.background = "rgba(16, 185, 129, 0.15)";
-        statusBadge.style.color = "#10b981";
-        if (balanceSection) balanceSection.style.display = 'none';
-      } else {
-        // Balance due details lookup & calculation
-        const booth = CONFIG.booths.find(b => b.id === row.booth_id);
-        const catMeta = booth ? CONFIG.categories[booth.category] : null;
-        const fullPrice = catMeta ? catMeta.fullPrice : 0;
-        const paidAmount = parseFloat(row.price_paid.replace('$', '')) || 0;
-        const balanceDue = Math.max(0, fullPrice - paidAmount);
-
-        statusBadge.textContent = t('lookup_status_deposit');
-        statusBadge.style.background = "rgba(245, 158, 11, 0.15)";
-        statusBadge.style.color = "#f59e0b";
-
-        if (balanceDue > 0) {
-          document.getElementById('lookup-balance-amount').textContent = `$${balanceDue}`;
-          if (balanceSection) balanceSection.style.display = 'flex';
-
-          // Render PayPal button for remaining balance amount
-          renderPayPalBalanceButton(row, balanceDue);
-
-          // TEMP: Test bypass button (Remove before production release)
-          const btnBypass = document.getElementById('btn-bypass-balance');
-          if (btnBypass) {
-            // Recreate node to remove prior event listeners cleanly
-            const newBtnBypass = btnBypass.cloneNode(true);
-            btnBypass.parentNode.replaceChild(newBtnBypass, btnBypass);
-            newBtnBypass.addEventListener('click', () => {
-              const mockTxId = `MOCK-BAL-${Math.random().toString(36).substring(2, 11).toUpperCase()}`;
-              completeBalancePayment(row, balanceDue, mockTxId);
-            });
-          }
-        } else {
-          if (balanceSection) balanceSection.style.display = 'none';
-        }
-      }
+      displayLookupResults(row);
     } else {
       if (loading) loading.style.display = 'none';
       if (errorAlert) {
@@ -1736,12 +1748,112 @@ async function performLookup(email, transactionId) {
     }
   } catch (err) {
     if (loading) loading.style.display = 'none';
-    if (errorAlert) {
-      errorAlert.textContent = "❌ Connection failed. Operating in offline mode.";
-      errorAlert.style.display = 'block';
+    
+    // Offline lookup fallback from local cache
+    let foundRow = null;
+    const bookingsList = Object.values(localReservations);
+    if (transactionId) {
+      foundRow = bookingsList.find(b => 
+        b.email.toLowerCase() === email.toLowerCase() && 
+        b.transactionId.toLowerCase().includes(transactionId.toLowerCase())
+      );
+    } else {
+      foundRow = bookingsList.find(b => 
+        b.email.toLowerCase() === email.toLowerCase() && 
+        b.name.toLowerCase().includes(name.toLowerCase()) && 
+        b.phone.toLowerCase().includes(phone.toLowerCase())
+      );
     }
-    if (form) form.style.display = 'flex';
-    console.error("Supabase lookup request failed: ", err);
+
+    if (foundRow) {
+      const mockRow = {
+        booth_id: foundRow.boothId,
+        booth_category: foundRow.boothCategory,
+        booth_dimensions: foundRow.boothDimensions,
+        contact_name: foundRow.name,
+        business_name: foundRow.business,
+        email: foundRow.email,
+        phone: foundRow.phone,
+        price_paid: foundRow.pricePaid,
+        payment_mode: foundRow.payMode,
+        transaction_id: foundRow.transactionId
+      };
+      
+      if (resultsDiv) resultsDiv.style.display = 'flex';
+      displayLookupResults(mockRow);
+    } else {
+      if (errorAlert) {
+        errorAlert.textContent = t('lookup_error');
+        errorAlert.style.display = 'block';
+      }
+      if (form) form.style.display = 'flex';
+    }
+    console.error("Supabase lookup failed: ", err);
+  }
+}
+
+function displayLookupResults(row) {
+  const balanceSection = document.getElementById('lookup-balance-due-section');
+  const statusBadge = document.getElementById('lookup-res-status');
+
+  // Map row parameters to lookup results UI
+  document.getElementById('lookup-res-business').textContent = row.business_name || '--';
+  document.getElementById('lookup-res-name').textContent = row.contact_name || '--';
+  
+  let dispId = row.booth_id;
+  if (row.booth_id === "1-L" || row.booth_id === "1-R") dispId = "1";
+  document.getElementById('lookup-res-booth').textContent = `#${dispId}`;
+  
+  let catTextTranslated = row.booth_category || '--';
+  const catKeys = ['General', 'Food', 'Boba', 'Fruits', 'Info', 'Reserved'];
+  for (const key of catKeys) {
+    if (catTextTranslated === CONFIG.categories[key].name) {
+      catTextTranslated = t(`cat_${key.toLowerCase()}`);
+      break;
+    }
+  }
+  document.getElementById('lookup-res-category').textContent = catTextTranslated;
+  document.getElementById('lookup-res-paid').textContent = row.price_paid || '--';
+
+  // Check reservation payment status
+  if (row.payment_mode === "Full Registration Fee") {
+    statusBadge.textContent = t('lookup_status_paid');
+    statusBadge.style.background = "rgba(16, 185, 129, 0.15)";
+    statusBadge.style.color = "#10b981";
+    if (balanceSection) balanceSection.style.display = 'none';
+  } else {
+    // Balance due details lookup & calculation
+    const booth = CONFIG.booths.find(b => b.id === row.booth_id);
+    const catMeta = booth ? CONFIG.categories[booth.category] : null;
+    const fullPrice = catMeta ? catMeta.fullPrice : 0;
+    const paidAmount = parseFloat(row.price_paid.replace('$', '')) || 0;
+    const balanceDue = Math.max(0, fullPrice - paidAmount);
+
+    statusBadge.textContent = t('lookup_status_deposit');
+    statusBadge.style.background = "rgba(245, 158, 11, 0.15)";
+    statusBadge.style.color = "#f59e0b";
+
+    if (balanceDue > 0) {
+      document.getElementById('lookup-balance-amount').textContent = `$${balanceDue}`;
+      if (balanceSection) balanceSection.style.display = 'flex';
+
+      // Render PayPal button for remaining balance amount
+      renderPayPalBalanceButton(row, balanceDue);
+
+      // TEMP: Test bypass button (Remove before production release)
+      const btnBypass = document.getElementById('btn-bypass-balance');
+      if (btnBypass) {
+        // Recreate node to remove prior event listeners cleanly
+        const newBtnBypass = btnBypass.cloneNode(true);
+        btnBypass.parentNode.replaceChild(newBtnBypass, btnBypass);
+        newBtnBypass.addEventListener('click', () => {
+          const mockTxId = `MOCK-BAL-${Math.random().toString(36).substring(2, 11).toUpperCase()}`;
+          completeBalancePayment(row, balanceDue, mockTxId);
+        });
+      }
+    } else {
+      if (balanceSection) balanceSection.style.display = 'none';
+    }
   }
 }
 
@@ -1905,4 +2017,14 @@ Object.defineProperty(window, 'currentLang', {
   configurable: true,
   enumerable: true
 });
+
+window.switchLookupTab = switchLookupTab;
+
+Object.defineProperty(window, 'activeLookupTab', {
+  get: () => activeLookupTab,
+  set: (val) => { switchLookupTab(val); },
+  configurable: true,
+  enumerable: true
+});
+
 

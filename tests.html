@@ -649,6 +649,66 @@
           assert(win.currentLang === 'en', "Language should toggle back to English ('en')");
           assert(brandTitle.textContent.trim() === "Hmong Association, Inc", "Title did not toggle back to English correctly");
         }
+      },
+      {
+        id: "lookup-modal-tabs",
+        name: "Dual lookup strategy (tabs, field visibility, validations)",
+        fn: async () => {
+          const { win, doc } = getApp();
+          
+          const linkLookup = doc.getElementById('link-lookup-booking');
+          assert(linkLookup !== null, "Lookup footer link not found");
+          
+          const modalLookupEl = doc.getElementById('modal-lookup');
+          assert(modalLookupEl !== null && !modalLookupEl.classList.contains('active'), "Lookup modal should not be active initially");
+          
+          linkLookup.dispatchEvent(new MouseEvent('click'));
+          await new Promise(r => setTimeout(r, 100));
+          
+          assert(modalLookupEl.classList.contains('active'), "Lookup modal should be active after clicking footer link");
+          assert(win.activeLookupTab === 'txid', "Default lookup tab should be 'txid'");
+          
+          const groupTxid = doc.getElementById('group-lookup-txid');
+          const groupDetails = doc.getElementById('group-lookup-details');
+          assert(groupTxid.style.display !== 'none', "Transaction ID group should be visible in txid tab");
+          assert(groupDetails.style.display === 'none', "Personal info group should be hidden in txid tab");
+          
+          const inputTxid = doc.getElementById('input-lookup-txid');
+          const inputName = doc.getElementById('input-lookup-name');
+          const docInputPhone = doc.getElementById('input-lookup-phone');
+          
+          assert(inputTxid.required === true, "Transaction ID should be required in txid tab");
+          assert(inputName.required === false, "Contact Name should not be required in txid tab");
+          assert(docInputPhone.required === false, "Phone Number should not be required in txid tab");
+          
+          const btnTabDetails = doc.getElementById('btn-tab-details');
+          assert(btnTabDetails !== null, "Details tab button not found");
+          btnTabDetails.dispatchEvent(new MouseEvent('click'));
+          await new Promise(r => setTimeout(r, 100));
+          
+          assert(win.activeLookupTab === 'details', "Lookup tab should switch to 'details'");
+          assert(groupTxid.style.display === 'none', "Transaction ID group should be hidden in details tab");
+          assert(groupDetails.style.display !== 'none', "Personal info group should be visible in details tab");
+          
+          assert(inputTxid.required === false, "Transaction ID should not be required in details tab");
+          assert(inputName.required === true, "Contact Name should be required in details tab");
+          assert(docInputPhone.required === true, "Phone Number should be required in details tab");
+          
+          const btnTabTxid = doc.getElementById('btn-tab-txid');
+          assert(btnTabTxid !== null, "TxID tab button not found");
+          btnTabTxid.dispatchEvent(new MouseEvent('click'));
+          await new Promise(r => setTimeout(r, 100));
+          
+          assert(win.activeLookupTab === 'txid', "Lookup tab should switch back to 'txid'");
+          assert(groupTxid.style.display !== 'none', "Transaction ID group should be visible again");
+          assert(groupDetails.style.display === 'none', "Personal info group should be hidden again");
+          
+          const btnClose = doc.getElementById('btn-lookup-close-x');
+          assert(btnClose !== null, "Close button not found");
+          btnClose.dispatchEvent(new MouseEvent('click'));
+          await new Promise(r => setTimeout(r, 100));
+          assert(!modalLookupEl.classList.contains('active'), "Lookup modal should not be active after closing");
+        }
       }
     ];
 

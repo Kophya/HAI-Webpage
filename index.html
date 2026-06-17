@@ -436,16 +436,35 @@
       </div>
       
       <div class="lookup-content">
+        <!-- Lookup Tab Selector -->
+        <div class="lookup-tab-bar" style="display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 16px;">
+          <button class="lookup-tab-btn active" id="btn-tab-txid" type="button" data-i18n="lookup_tab_txid">Search by Transaction ID</button>
+          <button class="lookup-tab-btn" id="btn-tab-details" type="button" data-i18n="lookup_tab_details">Search by Personal Info</button>
+        </div>
+
         <!-- Search form -->
         <form id="form-lookup" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 14px;">
           <div class="form-group">
             <label for="input-lookup-email" data-i18n="lookup_label_email">Registered Email Address *</label>
             <input type="email" id="input-lookup-email" class="form-control" placeholder="johndoe@example.com" data-i18n-placeholder="placeholder_email" required>
           </div>
-          <div class="form-group">
+          
+          <div class="form-group" id="group-lookup-txid">
             <label for="input-lookup-txid" data-i18n="lookup_label_txid">Original Transaction ID *</label>
             <input type="text" id="input-lookup-txid" class="form-control" placeholder="MOCK-PAY-XXXXXX or PAYID-XXXXXX" data-i18n-placeholder="lookup_placeholder_txid" required>
           </div>
+
+          <div id="group-lookup-details" style="display: none; flex-direction: column; gap: 14px;">
+            <div class="form-group">
+              <label for="input-lookup-name" data-i18n="label_contact_name">Contact Full Name *</label>
+              <input type="text" id="input-lookup-name" class="form-control" placeholder="John Doe" data-i18n-placeholder="placeholder_name">
+            </div>
+            <div class="form-group">
+              <label for="input-lookup-phone" data-i18n="label_phone">Phone Number *</label>
+              <input type="tel" id="input-lookup-phone" class="form-control" placeholder="(555) 000-0000" data-i18n-placeholder="placeholder_phone">
+            </div>
+          </div>
+
           <button class="btn-primary" id="btn-lookup-search" type="submit" style="width: 100%; padding: 12px; font-weight: 700; margin-top: 6px;" data-i18n="btn_lookup_search">
             Search Reservation
           </button>
