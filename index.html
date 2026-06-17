@@ -29,6 +29,10 @@
       </div>
     </div>
     <div class="header-actions">
+      <!-- Hidden Admin Panel Button (revealed only via secret URL query param) -->
+      <button class="btn-secondary" id="btn-admin-dashboard" style="display: none; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); font-weight: 600;" title="Open Bookkeeping Reservation Logbook">
+        🔑 Admin Dashboard
+      </button>
       <!-- Admin / Reset local bookings cache (useful for testing) -->
       <button class="btn-secondary" id="btn-reset-cache" title="Reset all reservations back to default (local testing only)">
         Reset Map
@@ -323,6 +327,80 @@
       <div class="receipt-footer">
         <button class="receipt-btn-print" id="btn-print-receipt">🖨 Print / Save PDF</button>
         <button class="receipt-btn-close" id="btn-close-receipt">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN LOGBOOK MODAL OVERLAY -->
+  <div class="modal-overlay" id="modal-admin-logbook">
+    <div class="admin-modal">
+      <div class="admin-header">
+        <div class="admin-header-title">
+          <span class="admin-icon">📊</span>
+          <div>
+            <h3>Bookkeeping Reservation Logbook</h3>
+            <p>View, print, and export all active booth reservations logged in Supabase</p>
+          </div>
+        </div>
+        <button class="admin-btn-close-x" id="btn-admin-close-x">&times;</button>
+      </div>
+
+      <div class="admin-content">
+        <!-- Stats Summary Section -->
+        <div class="admin-stats-grid">
+          <div class="admin-stat-card">
+            <span class="admin-stat-label">Total Reservations</span>
+            <span class="admin-stat-value" id="admin-stat-count">0</span>
+          </div>
+          <div class="admin-stat-card">
+            <span class="admin-stat-label">Total Revenue Collected</span>
+            <span class="admin-stat-value" id="admin-stat-revenue">$0.00</span>
+          </div>
+          <div class="admin-stat-card">
+            <span class="admin-stat-label">Database Status</span>
+            <span class="admin-stat-value" id="admin-stat-db" style="color: var(--color-success); font-size: 1.1rem;">Connected</span>
+          </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="admin-filters-bar">
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="admin-search-input" placeholder="Search by Business, Contact Name, Booth ID, or Transaction ID..." />
+          </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="admin-table-wrapper">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th style="width: 80px;">Booth #</th>
+                <th>Business / Vendor</th>
+                <th>Contact Name</th>
+                <th>Email Address</th>
+                <th>Phone Number</th>
+                <th style="width: 110px;">Price Paid</th>
+                <th>Payment Mode</th>
+                <th>Date & Time</th>
+                <th>Transaction ID</th>
+              </tr>
+            </thead>
+            <tbody id="admin-table-body">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+          <div class="admin-table-empty" id="admin-table-empty-state" style="display: none;">
+            <p>No bookings matching your search query were found.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="admin-footer">
+        <button class="admin-btn-export" id="btn-admin-export">📥 Export to Excel (CSV)</button>
+        <button class="admin-btn-print" id="btn-admin-print">🖨 Print Logbook</button>
+        <button class="admin-btn-close" id="btn-admin-close">Close</button>
       </div>
     </div>
   </div>

@@ -6,6 +6,11 @@
 
 // --- CONFIGURATION & DATABASE ---
 const CONFIG = {
+  // Supabase Centralized Database Configuration
+  supabaseUrl: "https://hwiodtzxukzjeijopayt.supabase.co",
+  supabaseKey: "sb_publishable_1sYheUJ-wC9CAj-22_BDYw_z0O76zyo",
+  adminPasscode: "hai-bookkeeper-2026", // Query param value: ?view=hai-bookkeeper-2026
+
   // SVG Canvas configuration
   svgWidth: 1000,
   svgHeight: 1050,
@@ -195,15 +200,105 @@ document.addEventListener('DOMContentLoaded', () => {
   loadReservations();
   renderMap();
   setupEventListeners();
+
+  // Check URL query parameters to reveal Admin Dashboard button (Option A)
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('view') === CONFIG.adminPasscode) {
+    const btnAdmin = document.getElementById('btn-admin-dashboard');
+    if (btnAdmin) {
+      btnAdmin.style.display = 'block';
+    }
+  }
 });
 
 // Load saved bookings from localStorage
-function loadReservations() {
+async function loadReservations() {
+  // Load cached reservations instantly first for offline availability
   const cached = localStorage.getItem('hai_booth_bookings');
   if (cached) {
     localReservations = JSON.parse(cached);
   } else {
     localReservations = {};
+  }
+
+  // Fetch updated bookings from Supabase
+  try {
+    const response = await fetch(`${CONFIG.supabaseUrl}/rest/v1/bookings`, {
+      method: 'GET',
+      headers: {
+        'apikey': CONFIG.supabaseKey,
+        'Authorization': `Bearer ${CONFIG.supabaseKey}`
+      }
+    });
+    if (response.ok) {
+      const data = await response.json();
+      const dbReservations = {};
+      data.forEach(row => {
+        dbReservations[row.booth_id] = {
+          boothId: row.booth_id,
+          boothCategory: row.booth_category,
+          boothDimensions: row.booth_dimensions,
+          name: row.contact_name,
+          email: row.email,
+          phone: row.phone,
+          business: row.business_name,
+          pricePaid: row.price_paid,
+          payMode: row.payment_mode,
+          transactionId: row.transaction_id,
+          date: row.created_at ? new Date(row.created_at).toLocaleString() : ''
+        };
+      });
+      
+      // Merge Supabase entries with local cache (favoring database entries as source of truth)
+      localReservations = { ...localReservations, ...dbReservations };
+      localStorage.setItem('hai_booth_bookings', JSON.stringify(localReservations));
+      
+      // If admin panel modal is active, update the dashboard table too
+      const adminModal = document.getElementById('modal-admin-logbook');
+      if (adminModal && adminModal.classList.contains('active')) {
+        renderAdminTable();
+      }
+      
+      renderMap();
+    } else {
+      console.warn("Supabase fetch failed: ", response.statusText);
+    }
+  } catch (err) {
+    console.warn("Supabase connection offline or blocked. Operating in local/localStorage mode.", err);
+  }
+}
+
+// Background sync helper to save new bookings to Supabase
+async function saveBookingToSupabase(booking) {
+  try {
+    const response = await fetch(`${CONFIG.supabaseUrl}/rest/v1/bookings`, {
+      method: 'POST',
+      headers: {
+        'apikey': CONFIG.supabaseKey,
+        'Authorization': `Bearer ${CONFIG.supabaseKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        booth_id: booking.boothId,
+        booth_category: booking.boothCategory,
+        booth_dimensions: booking.boothDimensions,
+        contact_name: booking.name,
+        business_name: booking.business,
+        email: booking.email,
+        phone: booking.phone,
+        price_paid: booking.pricePaid,
+        payment_mode: booking.payMode,
+        transaction_id: booking.transactionId
+      })
+    });
+    if (!response.ok) {
+      console.warn("Supabase insert responded with error status:", response.status);
+    } else {
+      console.log("Successfully logged booking to Supabase.");
+    }
+  } catch (err) {
+    console.error("Failed to save booking to Supabase:", err);
   }
 }
 
@@ -730,6 +825,50 @@ function setupEventListeners() {
       touchStartDist = 0;
     }
   });
+
+  // --- ADMIN LOGBOOK EVENTS ---
+  const btnAdminOpen = document.getElementById('btn-admin-dashboard');
+  const btnAdminClose = document.getElementById('btn-admin-close');
+  const btnAdminCloseX = document.getElementById('btn-admin-close-x');
+  const modalAdmin = document.getElementById('modal-admin-logbook');
+  const adminSearch = document.getElementById('admin-search-input');
+  const btnAdminExport = document.getElementById('btn-admin-export');
+  const btnAdminPrint = document.getElementById('btn-admin-print');
+
+  if (btnAdminOpen) {
+    btnAdminOpen.addEventListener('click', () => {
+      // Re-load reservations to get fresh database changes from Supabase
+      loadReservations();
+      renderAdminTable();
+      if (modalAdmin) modalAdmin.classList.add('active');
+    });
+  }
+
+  const closeAdmin = () => {
+    if (modalAdmin) modalAdmin.classList.remove('active');
+    if (adminSearch) adminSearch.value = '';
+  };
+
+  if (btnAdminClose) btnAdminClose.addEventListener('click', closeAdmin);
+  if (btnAdminCloseX) btnAdminCloseX.addEventListener('click', closeAdmin);
+
+  if (adminSearch) {
+    adminSearch.addEventListener('input', (e) => {
+      renderAdminTable(e.target.value);
+    });
+  }
+
+  if (btnAdminExport) {
+    btnAdminExport.addEventListener('click', () => {
+      exportCSV();
+    });
+  }
+
+  if (btnAdminPrint) {
+    btnAdminPrint.addEventListener('click', () => {
+      window.print();
+    });
+  }
 }
 
 // Apply the current zoom level to the SVG layout
@@ -871,6 +1010,9 @@ function completeBooking(transactionId) {
   localReservations[selectedBooth.id] = booking;
   localStorage.setItem('hai_booth_bookings', JSON.stringify(localReservations));
 
+  // Sync with Supabase centralized database in background
+  saveBookingToSupabase(booking);
+
   // Populate Receipt fields
   elements.recBusiness.textContent = booking.business;
   elements.recName.textContent = booking.name;
@@ -893,6 +1035,133 @@ function completeBooking(transactionId) {
   
   // Show Modal receipt
   elements.modalReceipt.classList.add('active');
+}
+
+// --- ADMIN LOGBOOK RENDERER & BOOKKEEPING HELPERS (Option A) ---
+// TODO/Reminder: Migrate this to Supabase Auth (Option B) for production and remove query param key!
+function renderAdminTable(searchQuery = '') {
+  const tbody = document.getElementById('admin-table-body');
+  const emptyState = document.getElementById('admin-table-empty-state');
+  const countEl = document.getElementById('admin-stat-count');
+  const revenueEl = document.getElementById('admin-stat-revenue');
+  
+  if (!tbody) return;
+
+  const query = searchQuery.toLowerCase().trim();
+  
+  // Filter active reservations matching search term
+  const bookings = Object.values(localReservations).filter(b => {
+    if (!query) return true;
+    return (
+      (b.boothId && b.boothId.toLowerCase().includes(query)) ||
+      (b.business && b.business.toLowerCase().includes(query)) ||
+      (b.name && b.name.toLowerCase().includes(query)) ||
+      (b.email && b.email.toLowerCase().includes(query)) ||
+      (b.transactionId && b.transactionId.toLowerCase().includes(query))
+    );
+  });
+
+  // Sort reservations by booth ID (numerical priority)
+  bookings.sort((a, b) => {
+    const aNum = parseInt(a.boothId.replace(/[^0-9]/g, '')) || 999;
+    const bNum = parseInt(b.boothId.replace(/[^0-9]/g, '')) || 999;
+    return aNum - bNum;
+  });
+
+  // Calculate statistics
+  let totalRevenue = 0;
+  bookings.forEach(b => {
+    const priceStr = b.pricePaid ? b.pricePaid.replace(/[^0-9.]/g, '') : '0';
+    totalRevenue += parseFloat(priceStr) || 0;
+  });
+
+  // Update Stats UI elements
+  if (countEl) countEl.textContent = bookings.length;
+  if (revenueEl) {
+    revenueEl.textContent = `$${totalRevenue.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
+  }
+
+  // Populate Table Body Rows
+  tbody.innerHTML = '';
+  if (bookings.length === 0) {
+    if (emptyState) emptyState.style.display = 'block';
+  } else {
+    if (emptyState) emptyState.style.display = 'none';
+    bookings.forEach(b => {
+      const tr = document.createElement('tr');
+      let dispId = b.boothId;
+      if (b.boothId === "1-L" || b.boothId === "1-R") dispId = "1";
+      tr.innerHTML = `
+        <td style="font-weight: 700; color: var(--color-booth-selected);">#${dispId}</td>
+        <td style="font-weight: 600; color: #ffffff;">${escapeHtml(b.business)}</td>
+        <td>${escapeHtml(b.name)}</td>
+        <td><a href="mailto:${escapeHtml(b.email)}" style="color: #60a5fa; text-decoration: none;">${escapeHtml(b.email)}</a></td>
+        <td><a href="tel:${escapeHtml(b.phone)}" style="color: var(--text-secondary); text-decoration: none;">${escapeHtml(b.phone)}</a></td>
+        <td style="font-weight: 700; color: #10b981;">${escapeHtml(b.pricePaid)}</td>
+        <td style="font-size: 0.8rem; color: var(--text-secondary);">${escapeHtml(b.payMode)}</td>
+        <td style="font-size: 0.8rem;">${escapeHtml(b.date)}</td>
+        <td style="font-family: monospace; font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(b.transactionId)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+}
+
+// Generate CSV string and trigger browser file download (Excel spreadsheet format)
+function exportCSV() {
+  const headers = ["Booth #", "Business / Vendor", "Contact Name", "Email", "Phone", "Price Paid", "Payment Mode", "Date", "Transaction ID"];
+  const csvRows = [headers.join(",")];
+  
+  // Sort by booth ID numerically before exporting
+  const sortedBookings = Object.values(localReservations).sort((a, b) => {
+    const aNum = parseInt(a.boothId.replace(/[^0-9]/g, '')) || 999;
+    const bNum = parseInt(b.boothId.replace(/[^0-9]/g, '')) || 999;
+    return aNum - bNum;
+  });
+
+  sortedBookings.forEach(b => {
+    let dispId = b.boothId;
+    if (b.boothId === "1-L" || b.boothId === "1-R") dispId = "1";
+    
+    const row = [
+      `"${dispId}"`,
+      `"${(b.business || '').replace(/"/g, '""')}"`,
+      `"${(b.name || '').replace(/"/g, '""')}"`,
+      `"${(b.email || '').replace(/"/g, '""')}"`,
+      `"${(b.phone || '').replace(/"/g, '""')}"`,
+      `"${(b.pricePaid || '').replace(/"/g, '""')}"`,
+      `"${(b.payMode || '').replace(/"/g, '""')}"`,
+      `"${(b.date || '').replace(/"/g, '""')}"`,
+      `"${(b.transactionId || '').replace(/"/g, '""')}"`
+    ];
+    csvRows.push(row.join(","));
+  });
+  
+  const csvContent = csvRows.join("\n");
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `hai_vendor_reservations_${new Date().toISOString().slice(0, 10)}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+// Standard security helper to escape HTML inputs and protect against XSS injection
+function escapeHtml(str) {
+  if (!str) return '';
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 // --- EXPOSE GLOBALS FOR AUTOMATED TESTING ---
