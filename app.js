@@ -38,8 +38,8 @@ const CONFIG = {
     },
     Fruits: {
       name: "Fruits Vendor",
-      depositPrice: 350,
-      fullPrice: 350,
+      depositPrice: 500,
+      fullPrice: 500,
       size: "20' x 30'",
       isReservable: true,
       colorClass: "color-fruits"
@@ -407,7 +407,7 @@ function drawLandmarks(svg, svgNS) {
   }
 
   // Draw Central Tent
-  drawBox(430, 220, 180, 260, "Tent Location TBD (50' x 100')", true);
+  drawBox(430, 220, 180, 260, "Central Tent (50' x 100')");
 
   // Draw Building
   drawBox(180, 680, 160, 240, "Building (50' x 120')");
@@ -501,6 +501,18 @@ function drawLandmarks(svg, svgNS) {
   drawCompass(775, 320, "EAST"); // Moved EAST further right into the walkway center to avoid booth 9 overlap
   drawCompass(640, 990, "SOUTH");
   drawCompass(80, 380, "WEST"); // Moved WEST further left next to the entrance gate space
+
+  // Add (sport fields) underneath WEST compass heading
+  const westSub = document.createElementNS(svgNS, "text");
+  westSub.setAttribute("x", "80");
+  westSub.setAttribute("y", "405");
+  westSub.setAttribute("text-anchor", "middle");
+  westSub.classList.add("svg-landmark-text");
+  westSub.style.fontSize = "12px";
+  westSub.style.fontWeight = "700";
+  westSub.style.fill = "#ea580c";
+  westSub.textContent = "(sport fields)";
+  svg.appendChild(westSub);
 }
 
 // --- TOOLTIP INTERACTION ---
