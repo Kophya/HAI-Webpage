@@ -384,20 +384,9 @@ header {
   user-select: none;
 }
 
-/* --- RIGHT SIDE: CHECKOUT SIDEBAR COLUMN --- */
-.sidebar-column {
-  width: 420px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  height: 100%;
-  overflow-y: auto;
-  flex-shrink: 0;
-  scrollbar-width: thin;
-}
-
+/* --- RIGHT SIDE: SIDEBAR CHECKOUT --- */
 .sidebar-checkout {
-  width: 100%;
+  width: 420px;
   background: var(--bg-sidebar);
   border: 2px solid var(--border-color); /* Premium borders on all sides */
   border-radius: var(--border-radius-lg); /* Rounded card corners */
@@ -407,8 +396,10 @@ header {
   gap: 24px;
   z-index: 10;
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08); /* Clean drop shadow */
-  align-self: stretch; /* Stretch to fill sidebar column width */
+  align-self: flex-start; /* Fit content height instead of stretching */
   flex-shrink: 0;
+  max-height: 100%; /* Prevent sidebar from expanding past app container height */
+  overflow-y: auto; /* Enable vertical scroll if checkout form is taller than viewport */
 }
 
 .checkout-title h2 {
@@ -986,21 +977,17 @@ header {
     gap: 16px;
   }
   
-  .sidebar-column {
-    width: 100%;
-    height: auto;
-    overflow-y: visible;
-    gap: 16px;
-  }
-
   .sidebar-checkout {
     width: 100%;
     height: auto;
+    max-height: none; /* Crucial: removes max-height limit on mobile */
     align-self: stretch;
   }
   
   .map-workspace {
     height: auto;
+    flex: none;
+    min-height: auto;
   }
   
   .map-board-wrapper {
@@ -1017,13 +1004,13 @@ header {
   }
   
   .location-container {
-    padding: 0;
+    padding: 0 16px 16px 16px;
   }
 }
 
 /* --- LOCATION CONTAINER --- */
 .location-container {
-  padding: 0;
+  padding: 0 24px 24px 24px;
   display: flex;
   justify-content: center;
   width: 100%;

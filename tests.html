@@ -587,12 +587,12 @@
           const sidebar = doc.querySelector('.sidebar-checkout').getBoundingClientRect();
           const location = doc.querySelector('.location-container').getBoundingClientRect();
           
-          // Check side-by-side positioning: Map on left, checkout sidebar & event location on right
+          // Check side-by-side positioning
           assert(map.right <= sidebar.left + 5, `Expected Map Workspace on left of Checkout Sidebar on Desktop. Map right: ${map.right}, Sidebar left: ${sidebar.left}`);
-          assert(map.right <= location.left + 5, `Expected Map Workspace on left of Location Container on Desktop. Map right: ${map.right}, Location left: ${location.left}`);
           
-          // Check vertical stacking in the right column: Checkout Sidebar on top, Location Container below it
-          assert(sidebar.bottom <= location.top + 5, `Expected Checkout Sidebar to stack above Event Location Card on desktop. Sidebar bottom: ${sidebar.bottom}, Location top: ${location.top}`);
+          // Check location map card is placed below the fold (below main viewport container)
+          const appContainer = doc.querySelector('.app-container').getBoundingClientRect();
+          assert(location.top >= appContainer.bottom - 5, `Expected Event Location Card to sit below the fold on desktop. Location top: ${location.top}, Main bottom: ${appContainer.bottom}`);
         }
       },
       {
