@@ -2034,7 +2034,9 @@ function getMapFitScale() {
   const viewportWidth = elements.canvasViewport.clientWidth;
   const viewportHeight = elements.canvasViewport.clientHeight;
   if (viewportWidth <= 0 || viewportHeight <= 0) return 1;
-  return Math.min(viewportWidth / CONFIG.svgWidth, viewportHeight / CONFIG.svgHeight);
+  // Prioritize width fit so the map scales to the visible viewport instead of
+  // shrinking to the shorter height on wide screens.
+  return viewportWidth / CONFIG.svgWidth;
 }
 
 function applyZoom() {

@@ -293,17 +293,19 @@ header {
 /* Unified Canvas Wrapper containing Satellite view and SVG overlay */
 .map-canvas-wrapper {
   position: relative;
-  margin: auto;
+  margin: 0;
   background-color: #ffffff;
   border-radius: var(--border-radius-md);
   box-shadow: none;
   border: 1px solid var(--border-color);
-  aspect-ratio: 1000 / 1050;
-  width: auto;
+  aspect-ratio: auto;
+  width: 100%;
   height: 100%;
-  max-width: 100%;
-  max-height: 100%;
+  max-width: none;
+  max-height: none;
   flex: none;
+  min-width: 0;
+  min-height: 0;
   overflow: visible; /* Let absolute items like zoom controls sit on top nicely */
 }
 
@@ -315,7 +317,7 @@ header {
   width: 100%;
   height: 100%;
   overflow: auto; /* Scrollable viewport for the zoomed canvas */
-  display: flex;
+  display: block;
   cursor: grab;
   border-radius: calc(var(--border-radius-md) - 2px); /* Keep inside white card border radius */
 }
@@ -333,12 +335,10 @@ header {
   z-index: 2;
   background: transparent; /* Transparent so map is visible underneath */
   overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  display: block;
   pointer-events: auto; /* Clicks operate normally */
   flex: none;
-  margin: auto;
+  margin: 0;
 }
 
 .scroll-hint {
@@ -363,6 +363,7 @@ header {
 
 /* SVG Interactive Layout Map */
 .layout-svg {
+  display: block;
   flex: none;
   width: 100%;
   height: 100%;
@@ -1160,16 +1161,16 @@ header {
   }
   
   .map-board-wrapper {
-    height: 550px;
-    min-height: 550px;
+    height: clamp(460px, 68dvh, 700px);
+    min-height: 460px;
     display: block;
     padding: 12px;
   }
 
   .map-canvas-wrapper {
-    width: auto;
+    width: 100%;
     height: 100%;
-    aspect-ratio: 1000 / 1050;
+    aspect-ratio: auto;
     margin: 0;
   }
   
@@ -1199,8 +1200,8 @@ header {
   }
 
   .map-board-wrapper {
-    height: clamp(390px, 62vh, 520px);
-    min-height: 390px;
+    height: clamp(400px, 64dvh, 560px);
+    min-height: 400px;
     padding: 8px;
   }
 
