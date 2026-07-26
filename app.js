@@ -1846,6 +1846,14 @@ function setupEventListeners() {
     applyZoom();
   });
 
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      applyZoom();
+    }, 120);
+  });
+
   // Mobile Pinch-To-Zoom Touch Gesture Listeners
   let touchStartDist = 0;
   let touchStartZoom = 1.0;
@@ -2021,11 +2029,21 @@ function setupEventListeners() {
 }
 
 // Apply the current zoom level to the SVG layout
+function getMapFitScale() {
+  if (!elements.canvasViewport) return 1;
+  const viewportWidth = elements.canvasViewport.clientWidth;
+  const viewportHeight = elements.canvasViewport.clientHeight;
+  if (viewportWidth <= 0 || viewportHeight <= 0) return 1;
+  return Math.min(viewportWidth / CONFIG.svgWidth, viewportHeight / CONFIG.svgHeight);
+}
+
 function applyZoom() {
   const svgElement = elements.canvasContainer.querySelector('svg');
   if (svgElement) {
-    const zoomWidth = CONFIG.svgWidth * currentZoom;
-    const zoomHeight = CONFIG.svgHeight * currentZoom;
+    const fitScale = getMapFitScale();
+    const effectiveScale = fitScale * currentZoom;
+    const zoomWidth = CONFIG.svgWidth * effectiveScale;
+    const zoomHeight = CONFIG.svgHeight * effectiveScale;
     
     elements.canvasContainer.style.width = `${zoomWidth}px`;
     elements.canvasContainer.style.height = `${zoomHeight}px`;
