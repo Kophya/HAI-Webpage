@@ -10,6 +10,7 @@ const CONFIG = {
   supabaseUrl: "https://hwiodtzxukzjeijopayt.supabase.co",
   supabaseKey: "sb_publishable_1sYheUJ-wC9CAj-22_BDYw_z0O76zyo",
   adminPasscode: "hai-bookkeeper-2026", // Query param value: ?view=hai-bookkeeper-2026
+  adminLoginEmail: "admin@hai.org",
 
   // SVG Canvas configuration
   svgWidth: 1000,
@@ -168,6 +169,29 @@ function getPaymentMethodFromTxId(txId) {
   }
 }
 
+function getFullRegistrationTotal(catMeta) {
+  if (!catMeta) return 0;
+  if (catMeta.depositPrice === catMeta.fullPrice) return catMeta.fullPrice;
+  return catMeta.depositPrice + catMeta.fullPrice;
+}
+
+function categoryNeedsFoodPermit(category) {
+  return category === "Food" || category === "Boba";
+}
+
+function getSignedDocsStatusLabel(statusCode) {
+  if (statusCode === 'online_submitted') return t('signed_copy_status_online');
+  if (statusCode === 'physical_submitted') return t('signed_copy_status_physical_submitted');
+  return t('signed_copy_status_pending_physical');
+}
+
+function getBookingSignedCopyStatus(booking) {
+  if (!booking) return 'pending_physical';
+  if (booking.signedCopyStatus) return booking.signedCopyStatus;
+  if (booking.signedCopySubmitted) return 'online_submitted';
+  return 'pending_physical';
+}
+
 const TRANSLATIONS = {
   en: {
     brand_title: "Hmong Association, Inc",
@@ -175,6 +199,21 @@ const TRANSLATIONS = {
     scale_note: "(Note: Dimensions and layout are not to scale)",
     btn_admin_dashboard: "🔑 Admin Dashboard",
     btn_reset_cache: "Reset Map",
+    btn_dev_portal: "🛠 Dev Portal",
+    dev_portal_title: "Dev Portal Login",
+    dev_portal_subtitle: "Enter admin email and password to continue.",
+    dev_portal_label_email: "Admin Email *",
+    dev_portal_placeholder_email: "admin@example.com",
+    dev_portal_label_password: "Admin Password *",
+    dev_portal_placeholder_password: "Enter password",
+    dev_portal_btn_login: "Continue to Dev Portal",
+    dev_portal_btn_skip: "⚡ Skip Login (Test Mode)",
+    dev_portal_non_admin_title: "Not an admin?",
+    dev_portal_non_admin_hint: "If you're not an admin, try Look Up Reservation to check your booking or pay a remaining balance.",
+    dev_portal_btn_lookup: "Look Up Reservation",
+    dev_portal_btn_continue: "Close",
+    dev_portal_error_email_required: "Admin email is required.",
+    dev_portal_error_password_required: "Admin password is required.",
     
     // Legend
     legend_general: "General ($350)",
@@ -188,6 +227,11 @@ const TRANSLATIONS = {
     // Sidebar/Checkout
     sidebar_title: "Reserve Spot",
     sidebar_subtitle: "Select an available booth on the layout to begin",
+    reserve_steps_title: "How to Reserve",
+    reserve_step_1: "Select an available booth on the map.",
+    reserve_step_2: "Choose payment amount (deposit or full, when available).",
+    reserve_step_3: "Fill in your contact and business details.",
+    reserve_step_4: "Complete payment with PayPal or Stripe to confirm your reservation.",
     checkout_empty_hint: "Click on any light-colored booth (white, peach, green, blue) on the floor map to configure your registration.",
     label_selected_booth: "Selected Booth",
     label_category: "Category",
@@ -207,6 +251,27 @@ const TRANSLATIONS = {
     placeholder_phone: "(555) 000-0000",
     label_business: "Business / Vendor Name *",
     placeholder_business: "ABC Merchandise Co.",
+    docs_required_title: "Required Vendor Papers",
+    docs_required_note: "Before reserving, review/fill these papers and confirm each item below.",
+    doc_app_pdf_link: "Open Vendor Application (PDF)",
+    doc_app_pdf_confirm: "I completed and agree to this paper.",
+    doc_app_xlsx_link: "Open Vendor Application (Excel)",
+    doc_app_xlsx_confirm: "I completed and agree to this paper.",
+    doc_rules_link: "Open Vendor Rules (PDF)",
+    doc_rules_confirm: "I read and agree to these rules.",
+    signed_copy_title: "Signed Copy Submission *",
+    signed_copy_note: "Choose how you will submit signed papers. Online upload is optional if you will submit physical copies.",
+    signed_copy_option_online: "I am submitting signed copies online now.",
+    signed_copy_option_physical: "I will submit physical signed copies in person.",
+    label_signed_copy_upload: "Upload Signed Copies *",
+    signed_copy_status_online: "Submitted Online",
+    signed_copy_status_pending_physical: "Pending Physical Copy",
+    signed_copy_status_physical_submitted: "Physical Copy Submitted",
+    permit_required_note: "Food and Boba vendors must provide a valid Food Handler Permit before reservation can be completed.",
+    label_permit_number: "Food Handler Permit Number *",
+    placeholder_permit_number: "FH-123456",
+    label_permit_expiry: "Permit Expiration Date *",
+    label_permit_confirm: "I confirm this permit is valid and belongs to this vendor.",
     label_payment_method: "Payment Method",
     label_stripe_card_number: "Card Number *",
     label_stripe_card_expiry: "Expiry (MM/YY) *",
@@ -232,6 +297,8 @@ const TRANSLATIONS = {
     receipt_label_contact: "Contact Person",
     receipt_label_email: "Email",
     receipt_label_phone: "Phone",
+    receipt_label_permit: "Food Handler Permit",
+    receipt_label_signed_docs: "Signed Documents",
     receipt_sec_booth: "Booth Details",
     receipt_label_booth: "Reserved Booth",
     receipt_label_category: "Category",
@@ -261,8 +328,12 @@ const TRANSLATIONS = {
     admin_th_price: "Price Paid",
     admin_th_mode: "Payment Mode",
     admin_th_paymethod: "Payment Method",
+    admin_th_signed_docs: "Signed Docs",
     admin_th_date: "Date & Time",
     admin_th_txid: "Transaction ID",
+    btn_mark_physical_received: "Mark received",
+    alert_signed_docs_marked: "Signed documents updated as physical copy submitted.",
+    alert_signed_docs_mark_failed: "Could not update signed-document status right now.",
     admin_empty: "No bookings matching your search query were found.",
     btn_admin_export: "📥 Export to Excel (CSV)",
     btn_admin_print: "🖨 Print Logbook",
@@ -327,167 +398,230 @@ const TRANSLATIONS = {
     error_card_invalid: "Card Number (must be 16 digits)",
     error_expiry_invalid: "Expiry (must be MM/YY, e.g. 12/28)",
     error_cvc_invalid: "CVC (must be 3 or 4 digits)",
+    error_permit_number_required: "Food Handler Permit Number (required for Food/Boba booths)",
+    error_permit_expiry_required: "Permit Expiration Date (required for Food/Boba booths)",
+    error_permit_confirm_required: "Permit confirmation checkbox (required for Food/Boba booths)",
+    error_doc_app_pdf_required: "Vendor Application (PDF) acknowledgment is required",
+    error_doc_app_xlsx_required: "Vendor Application (Excel) acknowledgment is required",
+    error_doc_rules_required: "Vendor Rules acknowledgment is required",
+    error_signed_copy_method_required: "Signed copy submission method is required",
+    error_signed_copy_upload_required: "Upload at least one signed copy file when submitting online",
     status_deposit: "Deposit Paid ($",
     status_fully_paid: "Fully Paid"
   },
   hm: {
-    brand_title: "Koom Txoos Hmoob, Inc",
-    brand_subtitle: "Arkansas Kev Sau Npe & Ceev Cov Chaw Muag Khoom",
-    scale_note: "(Faj seeb: Cov chaw ntsuas tsis yog raws nraim li qhov tseeb)",
+    brand_title: "Hmong Association, Inc",
+    brand_subtitle: "Arkansas Daim Phiaj Chaw Muag Khoom thiab Kev Ceev Chaw",
+    scale_note: "(Lus ceeb toom: Qhov loj thiab daim phiaj no tsis yog raws nraim li qhov ntsuas tiag)",
     btn_admin_dashboard: "🔑 Tswj Xyuas Chaw",
-    btn_reset_cache: "Rov Pib Map Tshiab",
+    btn_reset_cache: "Rov Pib Daim Phiaj",
+    btn_dev_portal: "🛠 Dev Portal",
+    dev_portal_title: "Nkag Mus Dev Portal",
+    dev_portal_subtitle: "Sau admin email thiab password kom txuas ntxiv.",
+    dev_portal_label_email: "Admin Email *",
+    dev_portal_placeholder_email: "admin@example.com",
+    dev_portal_label_password: "Admin Password *",
+    dev_portal_placeholder_password: "Sau password",
+    dev_portal_btn_login: "Mus Rau Dev Portal",
+    dev_portal_btn_skip: "⚡ Hla Login (Hom Kuaj)",
+    dev_portal_non_admin_title: "Tsis yog admin?",
+    dev_portal_non_admin_hint: "Yog koj tsis yog admin, sim Nrhiav Kev Ceev Chaw saib koj qhov booking lossis them nqe tshuav.",
+    dev_portal_btn_lookup: "Nrhiav Kev Ceev Chaw",
+    dev_portal_btn_continue: "Kaw",
+    dev_portal_error_email_required: "Yuav tsum sau admin email.",
+    dev_portal_error_password_required: "Yuav tsum sau admin password.",
     
     // Legend
-    legend_general: "Khoom Muag ($350)",
+    legend_general: "Khoom Muag Dav Dav ($350)",
     legend_food: "Zaub Mov ($1,000 / $1,500)",
-    legend_boba: "Dej Qab Zib Boba ($500 / $750)",
-    legend_fruits: "Txiv Hnyev / Txiv Ntoo ($500)",
-    legend_info: "Chaw Qhia Ntawv",
+    legend_boba: "Boba/Dej Haus Tshwj Xeeb ($500 / $750)",
+    legend_fruits: "Txiv Ntoo Muag ($500)",
+    legend_info: "Cov Ntaub Ntawv (Koom Haum Siv)",
     legend_reserved: "Ceev Lawm / Muag Lawm",
-    legend_selected: "Xaiv Tseg",
+    legend_selected: "Xaiv Lawm",
     
     // Sidebar/Checkout
-    sidebar_title: "Ceev Ib Qho Chaw",
-    sidebar_subtitle: "Xaiv ib lub chaw dawb hauv daim duab mus pib",
-    checkout_empty_hint: "Nyem rau ntawm lub chaw dawb (xim dawb, xim duav, xim ntsuab, xim xiav) hauv daim duab mus sau npe ceev chaw.",
-    label_selected_booth: "Lub Chaw Xaiv Tseg",
+    sidebar_title: "Ceev Chaw",
+    sidebar_subtitle: "Xaiv ib lub booth uas tseem dawb hauv daim phiaj kom pib",
+    reserve_steps_title: "Yuav Ceev Chaw Li Cas",
+    reserve_step_1: "Xaiv ib lub booth uas tseem dawb hauv daim phiaj.",
+    reserve_step_2: "Xaiv hom nyiaj them (deposit lossis them tag nrho, yog muaj).",
+    reserve_step_3: "Sau koj cov ntaub ntawv tiv tauj thiab ntaub ntawv lag luam.",
+    reserve_step_4: "Them nyiaj nrog PayPal lossis Stripe kom lees paub koj qhov kev ceev chaw.",
+    checkout_empty_hint: "Nyem rau ib lub booth xim daj/ntsuab/xiav/dawb hauv daim phiaj kom pib kev sau npe.",
+    label_selected_booth: "Booth Uas Xaiv",
     label_category: "Hom Chaw",
-    label_dimensions: "Qhov Loj (Ntsuas)",
+    label_dimensions: "Qhov Loj",
     label_payment_amount: "Xaiv Tus Nqi Them Nyiaj",
-    payment_option_deposit: "Them Nyiaj Ceev (Deposit)",
-    payment_option_full: "Them Tag Nrho (Full)",
+    payment_option_deposit: "Them Deposit",
+    payment_option_full: "Them Tag Nrho",
     payment_fixed_title: "Tus Nqi Sau Npe",
-    payment_fixed_full: "Tus Nqi Them Tag Nrho",
+    payment_fixed_full: "Tus Nqi Sau Npe Tag Nrho",
     
     // Form Labels & Placeholders
-    label_contact_name: "Hais Npe Tag Nrho *",
-    placeholder_name: "John Doe (Npe)",
-    label_email: "Chaw Nyob Email *",
-    placeholder_email: "johndoe@example.com (Email)",
-    label_phone: "Tus Xov Tooj *",
-    placeholder_phone: "(555) 000-0000 (Xov tooj)",
+    label_contact_name: "Npe Tag Nrho Tus Neeg Tiv Tauj *",
+    placeholder_name: "John Doe",
+    label_email: "Email *",
+    placeholder_email: "johndoe@example.com",
+    label_phone: "Xov Tooj *",
+    placeholder_phone: "(555) 000-0000",
     label_business: "Lub Npe Lag Luam / Tus Muag Khoom *",
-    placeholder_business: "Lag luam / Lub koom haum",
-    label_payment_method: "Thev Naus Them Nyiaj",
-    label_stripe_card_number: "Tus Naj Npawb Npav *",
-    label_stripe_card_expiry: "Hnub Tag Sij Hawm (MM/YY) *",
+    placeholder_business: "ABC Merchandise Co.",
+    docs_required_title: "Cov Ntaub Ntawv Yuav Tsum Muaj Rau Vendor",
+    docs_required_note: "Ua ntej ceev chaw, thov nyeem/ua cov ntaub ntawv no thiab lees paub txhua yam hauv qab no.",
+    doc_app_pdf_link: "Qhib Vendor Application (PDF)",
+    doc_app_pdf_confirm: "Kuv tau ua tiav daim ntawv no thiab pom zoo.",
+    doc_app_xlsx_link: "Qhib Vendor Application (Excel)",
+    doc_app_xlsx_confirm: "Kuv tau ua tiav daim ntawv no thiab pom zoo.",
+    doc_rules_link: "Qhib Vendor Rules (PDF)",
+    doc_rules_confirm: "Kuv tau nyeem thiab pom zoo rau cov cai no.",
+    signed_copy_title: "Kev Xa Daim Ntawv Kos Npe *",
+    signed_copy_note: "Xaiv txoj kev xa daim ntawv kos npe. Yog koj yuav nqa daim ntawv tiag tuaj xa, ces tsis yuam kom upload online.",
+    signed_copy_option_online: "Kuv xa cov ntaub ntawv kos npe online tam sim no.",
+    signed_copy_option_physical: "Kuv yuav nqa daim ntawv kos npe tiag tuaj xa rau tom chaw.",
+    label_signed_copy_upload: "Upload Cov Ntaub Ntawv Kos Npe *",
+    signed_copy_status_online: "Xa Online Lawm",
+    signed_copy_status_pending_physical: "Tseem Tos Xa Ntawv Tiag",
+    signed_copy_status_physical_submitted: "Xa Ntawv Tiag Lawm",
+    permit_required_note: "Cov vendor Zaub Mov thiab Boba yuav tsum muaj Food Handler Permit siv tau ua ntej ua tiav kev ceev chaw.",
+    label_permit_number: "Tus Naj Npawb Food Handler Permit *",
+    placeholder_permit_number: "FH-123456",
+    label_permit_expiry: "Hnub Permit Tas Sijhawm *",
+    label_permit_confirm: "Kuv lees tias permit no tseem siv tau thiab yog ntawm vendor no tiag.",
+    label_payment_method: "Txoj Kev Them Nyiaj",
+    label_stripe_card_number: "Naj Npawb Npav *",
+    label_stripe_card_expiry: "Hnub Tas Sijhawm (MM/YY) *",
     label_stripe_card_cvc: "Tus Code CVC *",
-    btn_pay_stripe: "Them Nyiaj Raws Npav",
-    btn_pay_balance_stripe: "Them Tshuav Nyiaj Raws Npav",
-    btn_bypass_test: "⚡ Skip Payment (Kuaj Ceev Chaw)",
-    link_lookup_prefix: "Puas tau ceev lawm?",
+    btn_pay_stripe: "Them Nyiaj Nrog Npav",
+    btn_pay_balance_stripe: "Them Nqe Tshuav Nrog Npav",
+    btn_bypass_test: "⚡ Hla Kev Them Nyiaj (Hom Kuaj)",
+    link_lookup_prefix: "Koj puas twb ceev lawm?",
     link_lookup_action: "Nrhiav Chaw / Them Nqe Tshuav",
     
     // Location
-    location_directions_title: "Chaw Nyob Ntawm Koom Txoos & Kev Mus",
-    location_directions_subtitle: "Saib qhov chaw ntawm Google Maps / Duab Satellite",
+    location_directions_title: "Chaw Txheej Txheem thiab Kev Mus Rau Chaw",
+    location_directions_subtitle: "Saib chaw nyob hauv Google Maps / Satellite",
     location_address: "Chaw Nyob:",
-    btn_directions: "🚗 Nrhiav Kev Mus",
+    btn_directions: "🚗 Qhia Kev Mus",
     btn_open_gmaps: "🌐 Qhib rau Google Maps",
     
     // Receipt Modal
     receipt_title: "Them Nyiaj Tau Lawm!",
-    receipt_subtitle: "Koj lub chaw ceev tau tso cai thiab paub tseeb lawm",
+    receipt_subtitle: "Koj qhov kev ceev booth tau lees paub lawm",
     receipt_sec_registrant: "Tus Neeg Sau Npe",
-    receipt_label_vendor: "Vendor/Lag Luam",
-    receipt_label_contact: "Tus Neeg Hais",
+    receipt_label_vendor: "Lub Npe Vendor",
+    receipt_label_contact: "Tus Neeg Tiv Tauj",
     receipt_label_email: "Email",
     receipt_label_phone: "Xov Tooj",
-    receipt_sec_booth: "Booth Paub Ntsiab",
-    receipt_label_booth: "Chaw Ceev Tau",
+    receipt_label_permit: "Food Handler Permit",
+    receipt_label_signed_docs: "Cov Ntawv Kos Npe",
+    receipt_sec_booth: "Ntaub Ntawv Booth",
+    receipt_label_booth: "Booth Uas Ceev Tau",
     receipt_label_category: "Hom Chaw",
-    receipt_label_dimensions: "Ntsuas Kev Loj",
-    receipt_sec_transaction: "Txoj Kev Them Nyiaj",
-    receipt_label_pay_mode: "Thev Naus Them",
+    receipt_label_dimensions: "Qhov Loj",
+    receipt_sec_transaction: "Ntaub Ntawv Kev Them Nyiaj",
+    receipt_label_pay_mode: "Hom Kev Them",
     receipt_label_payment_method: "Kev Them Nyiaj",
     receipt_label_txid: "Tus ID Them Nyiaj",
     receipt_label_date: "Hnub & Sij Hawm",
-    receipt_label_amount_paid: "Tus Nyiaj Them Lawm",
+    receipt_label_amount_paid: "Nyiaj Them Lawm",
     btn_print_receipt: "🖨 Luam Ntawv / Khaws PDF",
     btn_close: "Kaw",
     
     // Bookkeeping/Admin Logbook
-    admin_title: "Daim Ntawv Tswj Xyuas Cov Chaw Ceev",
-    admin_subtitle: "Saib, luam ntawv, thiab rub tawm cov chaw ceev hauv Supabase",
+    admin_title: "Phau Ntawv Tswj Xyuas Kev Ceev Chaw",
+    admin_subtitle: "Saib, luam, thiab rub tawm cov kev ceev chaw uas khaws cia hauv Supabase",
     admin_label_total: "Tag Nrho Chaw Ceev",
-    admin_label_revenue: "Tag Nrho Nyiaj Sau Tau",
-    admin_label_db: "Chaw Khaws Nyiaj Txuas",
+    admin_label_revenue: "Tag Nrho Nyiaj Tau Txais",
+    admin_label_db: "Qhov Txuas Database",
     admin_db_connected: "Txuas Lawm",
-    admin_placeholder_search: "Nrhiav raws li Lub Npe, Tus Hais, Tus Booth, lossis Tus ID...",
+    admin_placeholder_search: "Nrhiav raws li lag luam, npe neeg tiv tauj, booth #, lossis transaction ID...",
     admin_th_booth: "Booth #",
     admin_th_business: "Lag Luam / Tus Muag",
-    admin_th_contact: "Neeg Hais",
+    admin_th_contact: "Tus Neeg Tiv Tauj",
     admin_th_email: "Email",
     admin_th_phone: "Xov Tooj",
     admin_th_price: "Nqi Them",
-    admin_th_mode: "Thev Naus Them",
-    admin_th_paymethod: "Thev Naus Them Nyiaj",
+    admin_th_mode: "Hom Kev Them",
+    admin_th_paymethod: "Txoj Kev Them",
+    admin_th_signed_docs: "Cov Ntawv Kos Npe",
     admin_th_date: "Hnub & Sij Hawm",
     admin_th_txid: "Tus ID Them Nyiaj",
-    admin_empty: "Tsis pom kev ceev chaw twg raws li koj nrhiav.",
+    btn_mark_physical_received: "Kos tias tau txais lawm",
+    alert_signed_docs_marked: "Tau hloov cov ntawv kos npe mus rau xa ntawv tiag lawm.",
+    alert_signed_docs_mark_failed: "Hloov tsis tau qhov xwm txheej ntawm cov ntawv kos npe tam sim no.",
+    admin_empty: "Tsis pom qhov kev ceev chaw twg uas phim qhov koj nrhiav.",
     btn_admin_export: "📥 Rub tawm Excel (CSV)",
     btn_admin_print: "🖨 Luam Ntawv Tswj Xyuas",
     btn_admin_close: "Kaw",
     
     // Lookup Modal
     lookup_title: "Nrhiav Kev Ceev Chaw",
-    lookup_subtitle: "Nrhiav raws li tus ID them nyiaj lossis neeg cov ntaub ntawv nrog email sau npe txhawm rau them nqe tshuav",
+    lookup_subtitle: "Nrhiav nrog transaction ID lossis ntaub ntawv tiv tauj (nrog email sau npe) kom them nqe tshuav",
     lookup_tab_txid: "Nrhiav raws li Tus ID Them Nyiaj",
-    lookup_tab_details: "Nrhiav raws li Kev Hais Npe",
+    lookup_tab_details: "Nrhiav raws li Ntaub Ntawv Tiv Tauj",
     lookup_label_email: "Email Sau Npe *",
     lookup_label_txid: "Tus ID Them Nyiaj Ua Ntej *",
     lookup_placeholder_txid: "MOCK-PAY-XXXXXX lossis PAYID-XXXXXX",
-    btn_lookup_search: "Nrhiav Qhov Ceev Chaw",
+    btn_lookup_search: "Nrhiav Kev Ceev Chaw",
     lookup_searching: "Tab tom nrhiav hauv database...",
-    lookup_error: "❌ Tsis pom muaj chaw ceev raws li cov ntsiab lus saum toj no. Thov xyuas kom zoo thiab sim dua.",
-    lookup_sec_title: "Ntsiab Lus Ceev Chaw",
+    lookup_error: "❌ Tsis pom kev ceev chaw phim cov ntaub ntawv no. Thov xyuas dua thiab sim dua.",
+    lookup_sec_title: "Ntaub Ntawv Kev Ceev Chaw",
     lookup_res_business: "Lag Luam / Tus Muag",
-    lookup_res_contact: "Tus Neeg Hais",
-    lookup_res_booth: "Chaw Ceev Tau",
+    lookup_res_contact: "Tus Neeg Tiv Tauj",
+    lookup_res_booth: "Booth Uas Ceev Tau",
     lookup_res_category: "Hom Chaw",
-    lookup_res_paid: "Tus Nyiaj Them Lawm",
+    lookup_res_paid: "Nyiaj Them Lawm",
     lookup_res_status: "Qhov Txheej Txheem",
     lookup_status_deposit: "Them Ceev Lawm",
     lookup_status_paid: "Them Tag Nrho Lawm",
     lookup_balance_due_label: "Nqe Tshuav:",
-    lookup_balance_note: "Koj tau them qhov ceev (deposit) ua ntej lawm. Koj yuav tsum them tus nqi tshuav kom tiav thiaj ceev tau koj lub booth.",
-    lookup_label_payment_method: "Xaiv Cov Kev Them Nyiaj",
+    lookup_balance_note: "Koj twb them deposit lawm. Thov them tus nqi tshuav kom tiav thiaj li khaws tau koj lub booth.",
+    lookup_label_payment_method: "Xaiv Txoj Kev Them Nyiaj",
     btn_bypass_balance: "⚡ Hla Kev Them Nyiaj (Kuaj Them Nqe Tshuav)",
     lookup_success_title: "Them Nyiaj Tau Lawm!",
     lookup_success_msg: "Koj cov nyiaj tshuav tau them tiav lawm thiab koj qhov chaw ceev tau hloov mus rau **Them Tag Nrho Lawm**. Ua tsaug ntau!",
     btn_lookup_close: "Kaw",
     
     // Dynamic Categories & Map labels
-    cat_general: "Khoom Muag Feem Ntau",
+    cat_general: "Khoom Muag Dav Dav",
     cat_food: "Muag Zaub Mov",
-    cat_boba: "Dej Qab Zib Boba",
-    cat_fruits: "Txiv Hnyev / Txiv Ntoo",
-    cat_info: "Chaw Qhia Ntawv",
-    cat_reserved: "Ceev los ntawm Koom Txoos",
+    cat_boba: "Boba/Dej Haus Tshwj Xeeb",
+    cat_fruits: "Txiv Ntoo Muag",
+    cat_info: "Cov Ntaub Ntawv / Tsis Nrhiav Nyiaj",
+    cat_reserved: "Koom Haum Tau Ceev Tseg",
     
-    landmark_central_tent: "Tsev Pheeb Suab Nruab Nrab (50' x 100')",
-    landmark_building: "Lub Tsev Loj (50' x 120')",
+    landmark_central_tent: "Tsev Pheebsuab Nruab Nrab (50' x 100')",
+    landmark_building: "Tsev Loj (50' x 120')",
     landmark_office: "Chaw Ua Haujlwm",
     landmark_storage: "Chaw Khaws Khoom",
     landmark_pavilion: "Tsev Pavilion",
     landmark_dumpster: "Thawv Khib Nyiab",
     landmark_fence: "LAJ KAB",
-    landmark_main_gate: "Ntawm Qhov Rooj Loj",
+    landmark_main_gate: "Los Ntawm Rooj Vag Loj",
     landmark_sports_field_arrow: "Mus rau Chaw Ncaws Pob",
-    compass_north: "QAUM TEB",
-    compass_east: "HNUB TUAJ",
-    compass_south: "QAB TEB",
-    compass_west: "HNUB POOB",
+    compass_north: "SAB QAUM TEB",
+    compass_east: "SAB HNUB TUAJ",
+    compass_south: "SAB QAB TEB",
+    compass_west: "SAB HNUB POOB",
     compass_sport_fields: "(chaw ncaws pob)",
     
     // Alert & Dynamic status texts
     alert_correct_fields: "Thov kho cov chaw hauv qab no ua ntej yuav mus ntxiv:",
-    alert_paypal_error: "PayPal failed to process. Ensure you are using Sandbox details, or use Skip Payment (Test Mode) to test.",
-    alert_paypal_error_balance: "PayPal failed to process. Try again or use Skip Payment (Test Mode).",
-    error_email_format: "Email Address (yuav tsum yog hom email tseeb, piv txwv name@example.com)",
-    error_card_invalid: "Tus Naj Npawb Npav (yuav tsum muaj 16 tus lej)",
-    error_expiry_invalid: "Hnub Tag (MM/YY, piv txwv 12/28)",
+    alert_paypal_error: "PayPal ua tsis tiav. Thov xyuas kom koj siv Sandbox kom raug, lossis siv Hla Kev Them Nyiaj (Hom Kuaj).",
+    alert_paypal_error_balance: "PayPal ua tsis tiav. Thov sim dua lossis siv Hla Kev Them Nyiaj (Hom Kuaj).",
+    error_email_format: "Email (yuav tsum yog hom email raug, piv txwv name@example.com)",
+    error_card_invalid: "Naj Npawb Npav (yuav tsum muaj 16 tus lej)",
+    error_expiry_invalid: "Hnub Tas Sijhawm (MM/YY, piv txwv 12/28)",
     error_cvc_invalid: "Tus CVC (yuav tsum muaj 3 lossis 4 tus lej)",
+    error_permit_number_required: "Tus Naj Npawb Food Handler Permit (yuav tsum muaj rau Food/Boba booths)",
+    error_permit_expiry_required: "Hnub Permit Tas Sijhawm (yuav tsum muaj rau Food/Boba booths)",
+    error_permit_confirm_required: "Yuav tsum xaiv checkbox lees permit (rau Food/Boba booths)",
+    error_doc_app_pdf_required: "Yuav tsum lees paub Vendor Application (PDF)",
+    error_doc_app_xlsx_required: "Yuav tsum lees paub Vendor Application (Excel)",
+    error_doc_rules_required: "Yuav tsum lees paub Vendor Rules",
+    error_signed_copy_method_required: "Yuav tsum xaiv txoj kev xa daim ntawv kos npe",
+    error_signed_copy_upload_required: "Thov upload tsawg kawg ib daim ntawv kos npe yog tias xa online",
     status_deposit: "Them Ceev Lawm ($",
     status_fully_paid: "Them Tag Nrho Lawm"
   }
@@ -500,6 +634,7 @@ function t(key) {
 function setLanguage(lang) {
   currentLang = lang;
   localStorage.setItem('hai_language_pref', lang);
+  syncLanguageQueryParam(lang);
   
   const btnToggle = document.getElementById('btn-language-toggle');
   if (btnToggle) {
@@ -532,6 +667,16 @@ function setLanguage(lang) {
 
   updateLookupModalTranslation();
   renderMap();
+}
+
+function syncLanguageQueryParam(lang) {
+  const url = new URL(window.location.href);
+  if (lang === 'hm') {
+    url.searchParams.set('lang', 'hm');
+  } else {
+    url.searchParams.delete('lang');
+  }
+  window.history.replaceState({}, '', url.toString());
 }
 
 function switchLookupTab(tab) {
@@ -626,6 +771,7 @@ function updateLookupModalTranslation() {
 const elements = {
   canvasContainer: document.getElementById('canvas-container'),
   canvasViewport: document.getElementById('canvas-viewport'),
+  reservationSteps: document.querySelector('.reservation-steps'),
   checkoutEmpty: document.getElementById('checkout-empty'),
   checkoutActive: document.getElementById('checkout-active'),
   dispBoothId: document.getElementById('disp-booth-id'),
@@ -645,6 +791,17 @@ const elements = {
   inputEmail: document.getElementById('input-email'),
   inputPhone: document.getElementById('input-phone'),
   inputBusiness: document.getElementById('input-business'),
+  inputDocAppPdf: document.getElementById('input-doc-app-pdf'),
+  inputDocAppXlsx: document.getElementById('input-doc-app-xlsx'),
+  inputDocRules: document.getElementById('input-doc-rules'),
+  inputSignedCopyOnline: document.getElementById('input-signed-copy-online'),
+  inputSignedCopyPhysical: document.getElementById('input-signed-copy-physical'),
+  inputSignedCopyFiles: document.getElementById('input-signed-copy-files'),
+  signedCopyUploadGroup: document.getElementById('signed-copy-upload-group'),
+  permitBlock: document.getElementById('permit-block'),
+  inputPermitNumber: document.getElementById('input-permit-number'),
+  inputPermitExpiry: document.getElementById('input-permit-expiry'),
+  inputPermitConfirm: document.getElementById('input-permit-confirm'),
   
   // Tooltip
   tooltip: document.getElementById('map-tooltip'),
@@ -658,6 +815,8 @@ const elements = {
   recName: document.getElementById('rec-name'),
   recEmail: document.getElementById('rec-email'),
   recPhone: document.getElementById('rec-phone'),
+  receiptPermitRow: document.getElementById('receipt-permit-row'),
+  recPermit: document.getElementById('rec-permit'),
   recBoothId: document.getElementById('rec-booth-id'),
   recBoothCategory: document.getElementById('rec-booth-category'),
   recBoothDimensions: document.getElementById('rec-booth-dimensions'),
@@ -665,6 +824,7 @@ const elements = {
   recPaymentMethod: document.getElementById('rec-payment-method'),
   recTransactionId: document.getElementById('rec-transaction-id'),
   recDate: document.getElementById('rec-date'),
+  recSignedDocs: document.getElementById('rec-signed-docs'),
   recTotalPaid: document.getElementById('rec-total-paid'),
   btnPrintReceipt: document.getElementById('btn-print-receipt'),
   btnCloseReceipt: document.getElementById('btn-close-receipt')
@@ -675,12 +835,9 @@ document.addEventListener('DOMContentLoaded', () => {
   window.loadReservationsPromise = loadReservations();
   setupEventListeners();
 
-  // Detect language-specific landing pages (e.g. hmong.html) to set default on load
-  const pagePath = window.location.pathname;
-  const isHmongPage = pagePath.endsWith('hmong.html') || pagePath.endsWith('hmong') || window.location.href.includes('hmong');
-
-  if (isHmongPage) {
-    currentLang = 'hm';
+  const urlLang = new URLSearchParams(window.location.search).get('lang');
+  if (urlLang === 'en' || urlLang === 'hm') {
+    currentLang = urlLang;
   } else {
     const savedLang = localStorage.getItem('hai_language_pref');
     if (savedLang === 'en' || savedLang === 'hm') {
@@ -734,6 +891,11 @@ async function loadReservations() {
       const data = await response.json();
       const dbReservations = {};
       data.forEach(row => {
+        const existingLocal = localReservations[row.booth_id] || {};
+        const signedCopyStatus = row.signed_copy_status || existingLocal.signedCopyStatus || (row.signed_copy_submitted ? 'online_submitted' : 'pending_physical');
+        const signedCopyFiles = row.signed_copy_files
+          ? String(row.signed_copy_files).split(',').map(x => x.trim()).filter(Boolean)
+          : (existingLocal.signedCopyFiles || []);
         dbReservations[row.booth_id] = {
           boothId: row.booth_id,
           boothCategory: row.booth_category,
@@ -742,9 +904,16 @@ async function loadReservations() {
           email: row.email,
           phone: row.phone,
           business: row.business_name,
+          foodPermitRequired: row.food_permit_required ? true : (existingLocal.foodPermitRequired || false),
+          permitNumber: row.permit_number || existingLocal.permitNumber || "",
+          permitExpiry: row.permit_expiry || existingLocal.permitExpiry || "",
           pricePaid: row.price_paid,
           payMode: row.payment_mode,
           transactionId: row.transaction_id,
+          signedCopyMethod: row.signed_copy_method || existingLocal.signedCopyMethod || 'physical',
+          signedCopySubmitted: row.signed_copy_submitted ? true : false,
+          signedCopyStatus,
+          signedCopyFiles,
           date: row.created_at ? new Date(row.created_at).toLocaleString() : ''
         };
       });
@@ -797,6 +966,13 @@ async function saveBookingToSupabase(booking) {
         business_name: booking.business,
         email: booking.email,
         phone: booking.phone,
+        food_permit_required: booking.foodPermitRequired ? true : false,
+        permit_number: booking.permitNumber || null,
+        permit_expiry: booking.permitExpiry || null,
+        signed_copy_method: booking.signedCopyMethod,
+        signed_copy_submitted: booking.signedCopySubmitted ? true : false,
+        signed_copy_status: booking.signedCopyStatus,
+        signed_copy_files: booking.signedCopyFiles && booking.signedCopyFiles.length ? booking.signedCopyFiles.join(', ') : null,
         price_paid: booking.pricePaid,
         payment_mode: booking.payMode,
         transaction_id: booking.transactionId
@@ -809,6 +985,47 @@ async function saveBookingToSupabase(booking) {
     }
   } catch (err) {
     console.error("Failed to save booking to Supabase:", err);
+  }
+}
+
+async function markPhysicalCopySubmitted(boothId) {
+  const booking = localReservations[boothId];
+  if (!booking) return;
+  const previousBooking = { ...booking };
+  booking.signedCopyMethod = 'physical';
+  booking.signedCopySubmitted = true;
+  booking.signedCopyStatus = 'physical_submitted';
+  localReservations[boothId] = booking;
+  localStorage.setItem('hai_booth_bookings', JSON.stringify(localReservations));
+  renderAdminTable(document.getElementById('admin-search-input') ? document.getElementById('admin-search-input').value : '');
+
+  const isTestingMode = window.parent && window.parent.location.href.includes('tests.html');
+  if (isTestingMode) return;
+  try {
+    const response = await fetch(`${CONFIG.supabaseUrl}/rest/v1/bookings?booth_id=eq.${encodeURIComponent(boothId)}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': CONFIG.supabaseKey,
+        'Authorization': `Bearer ${CONFIG.supabaseKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        signed_copy_method: 'physical',
+        signed_copy_submitted: true,
+        signed_copy_status: 'physical_submitted'
+      })
+    });
+    if (!response.ok) {
+      throw new Error(`Supabase update failed with status ${response.status}`);
+    }
+    alert(t('alert_signed_docs_marked'));
+  } catch (err) {
+    localReservations[boothId] = previousBooking;
+    localStorage.setItem('hai_booth_bookings', JSON.stringify(localReservations));
+    renderAdminTable(document.getElementById('admin-search-input') ? document.getElementById('admin-search-input').value : '');
+    console.error('Failed to mark physical signed copy as submitted:', err);
+    alert(t('alert_signed_docs_mark_failed'));
   }
 }
 
@@ -1178,9 +1395,35 @@ function handleBoothSelect(booth) {
 
 function updateCheckoutPanel() {
   if (!selectedBooth) {
+    if (elements.reservationSteps) {
+      elements.reservationSteps.classList.remove('collapsed');
+    }
+    if (elements.permitBlock) {
+      elements.permitBlock.style.display = 'none';
+    }
+    if (elements.inputPermitNumber) {
+      elements.inputPermitNumber.required = false;
+      elements.inputPermitNumber.value = '';
+    }
+    if (elements.inputPermitExpiry) {
+      elements.inputPermitExpiry.required = false;
+      elements.inputPermitExpiry.value = '';
+    }
+    if (elements.inputPermitConfirm) {
+      elements.inputPermitConfirm.required = false;
+      elements.inputPermitConfirm.checked = false;
+    }
+    if (elements.inputSignedCopyOnline) elements.inputSignedCopyOnline.checked = false;
+    if (elements.inputSignedCopyPhysical) elements.inputSignedCopyPhysical.checked = false;
+    if (elements.inputSignedCopyFiles) elements.inputSignedCopyFiles.value = '';
+    if (elements.signedCopyUploadGroup) elements.signedCopyUploadGroup.style.display = 'none';
     elements.checkoutEmpty.style.display = "flex";
     elements.checkoutActive.style.display = "none";
     return;
+  }
+
+  if (elements.reservationSteps) {
+    elements.reservationSteps.classList.add('collapsed');
   }
 
   // Show checkout panel
@@ -1207,6 +1450,7 @@ function updateCheckoutPanel() {
   if (inputStripeCvc) inputStripeCvc.value = '';
 
   const catMeta = CONFIG.categories[selectedBooth.category];
+  const needsPermit = categoryNeedsFoodPermit(selectedBooth.category);
   
   let dispId = selectedBooth.id;
   if (selectedBooth.id === "1-L" || selectedBooth.id === "1-R") dispId = "1";
@@ -1216,9 +1460,29 @@ function updateCheckoutPanel() {
   elements.dispBoothCategory.className = `badge color-${selectedBooth.category.toLowerCase()}`;
   elements.dispBoothDimensions.textContent = catMeta.size;
 
+  if (elements.permitBlock) {
+    elements.permitBlock.style.display = needsPermit ? 'flex' : 'none';
+  }
+  if (elements.inputPermitNumber) {
+    elements.inputPermitNumber.required = needsPermit;
+    if (!needsPermit) elements.inputPermitNumber.value = '';
+  }
+  if (elements.inputPermitExpiry) {
+    elements.inputPermitExpiry.required = needsPermit;
+    if (!needsPermit) elements.inputPermitExpiry.value = '';
+  }
+  if (elements.inputPermitConfirm) {
+    elements.inputPermitConfirm.required = needsPermit;
+    if (!needsPermit) elements.inputPermitConfirm.checked = false;
+  }
+  if (elements.inputSignedCopyOnline) elements.inputSignedCopyOnline.checked = false;
+  if (elements.inputSignedCopyPhysical) elements.inputSignedCopyPhysical.checked = false;
+  if (elements.inputSignedCopyFiles) elements.inputSignedCopyFiles.value = '';
+  if (elements.signedCopyUploadGroup) elements.signedCopyUploadGroup.style.display = 'none';
+
   // Render prices in selector
   elements.priceDeposit.textContent = `$${catMeta.depositPrice}`;
-  elements.priceFull.textContent = `$${catMeta.fullPrice}`;
+  elements.priceFull.textContent = `$${getFullRegistrationTotal(catMeta)}`;
 
   // If Deposit is equal to Full registration (e.g. General, Fruits)
   // we hide the dual selection options block and show a fixed amount info card
@@ -1240,7 +1504,7 @@ function updateCheckoutPanel() {
   }
 
   // Load active price
-  const currentPrice = selectedPaymentMode === 'deposit' ? catMeta.depositPrice : catMeta.fullPrice;
+  const currentPrice = selectedPaymentMode === 'deposit' ? catMeta.depositPrice : getFullRegistrationTotal(catMeta);
   const description = `Registration for Booth #${dispId} (${catMeta.name})`;
 
   // Render PayPal SDK Checkout buttons
@@ -1257,6 +1521,39 @@ function updatePaymentOptionsUI() {
   }
 }
 
+function openLookupModal() {
+  const modalLookup = document.getElementById('modal-lookup');
+  const inputLookupEmail = document.getElementById('input-lookup-email');
+  const inputLookupTxid = document.getElementById('input-lookup-txid');
+  if (inputLookupEmail) inputLookupEmail.value = '';
+  if (inputLookupTxid) inputLookupTxid.value = '';
+  const inputLookupName = document.getElementById('input-lookup-name');
+  const inputLookupPhone = document.getElementById('input-lookup-phone');
+  if (inputLookupName) inputLookupName.value = '';
+  if (inputLookupPhone) inputLookupPhone.value = '';
+
+  switchLookupTab('txid');
+
+  const lookupLoading = document.getElementById('lookup-loading');
+  const lookupError = document.getElementById('lookup-error');
+  const lookupResults = document.getElementById('lookup-results');
+  const lookupSuccess = document.getElementById('lookup-success');
+  const lookupForm = document.getElementById('form-lookup');
+  if (lookupLoading) lookupLoading.style.display = 'none';
+  if (lookupError) lookupError.style.display = 'none';
+  if (lookupResults) lookupResults.style.display = 'none';
+  if (lookupSuccess) lookupSuccess.style.display = 'none';
+  if (lookupForm) lookupForm.style.display = 'flex';
+  if (modalLookup) modalLookup.classList.add('active');
+}
+
+function openAdminLogbookModal() {
+  const modalAdmin = document.getElementById('modal-admin-logbook');
+  loadReservations();
+  renderAdminTable();
+  if (modalAdmin) modalAdmin.classList.add('active');
+}
+
 // --- EVENT HANDLERS ---
 function setupEventListeners() {
   // Language Switcher Toggle Click Event
@@ -1265,6 +1562,88 @@ function setupEventListeners() {
     btnLang.addEventListener('click', () => {
       const nextLang = currentLang === 'en' ? 'hm' : 'en';
       setLanguage(nextLang);
+    });
+  }
+
+  const btnDevPortal = document.getElementById('btn-dev-portal');
+  const modalDevPortal = document.getElementById('modal-dev-portal');
+  const btnDevPortalClose = document.getElementById('btn-dev-portal-close');
+  const btnDevPortalCloseX = document.getElementById('btn-dev-portal-close-x');
+  const formDevPortal = document.getElementById('form-dev-portal');
+  const btnDevPortalSkip = document.getElementById('btn-dev-portal-skip');
+  const inputDevPortalEmail = document.getElementById('input-dev-portal-email');
+  const inputDevPortalPassword = document.getElementById('input-dev-portal-password');
+  const devPortalError = document.getElementById('dev-portal-error');
+  const devPortalNonAdmin = document.getElementById('dev-portal-non-admin');
+  const btnDevPortalLookup = document.getElementById('btn-dev-portal-lookup');
+  const btnDevPortalContinue = document.getElementById('btn-dev-portal-continue');
+
+  const closeDevPortal = () => {
+    if (modalDevPortal) modalDevPortal.classList.remove('active');
+  };
+
+  if (btnDevPortal) {
+    btnDevPortal.addEventListener('click', () => {
+      if (inputDevPortalEmail) inputDevPortalEmail.value = '';
+      if (inputDevPortalPassword) inputDevPortalPassword.value = '';
+      if (devPortalError) devPortalError.style.display = 'none';
+      if (devPortalNonAdmin) devPortalNonAdmin.style.display = 'none';
+      if (modalDevPortal) modalDevPortal.classList.add('active');
+    });
+  }
+  if (btnDevPortalClose) btnDevPortalClose.addEventListener('click', closeDevPortal);
+  if (btnDevPortalCloseX) btnDevPortalCloseX.addEventListener('click', closeDevPortal);
+  if (btnDevPortalSkip) {
+    btnDevPortalSkip.addEventListener('click', () => {
+      closeDevPortal();
+      openAdminLogbookModal();
+    });
+  }
+
+  if (formDevPortal) {
+    formDevPortal.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = inputDevPortalEmail ? inputDevPortalEmail.value.trim() : '';
+      const password = inputDevPortalPassword ? inputDevPortalPassword.value.trim() : '';
+      if (!email) {
+        if (devPortalError) {
+          devPortalError.textContent = t('dev_portal_error_email_required');
+          devPortalError.style.display = 'block';
+        }
+        return;
+      }
+      if (!password) {
+        if (devPortalError) {
+          devPortalError.textContent = t('dev_portal_error_password_required');
+          devPortalError.style.display = 'block';
+        }
+        return;
+      }
+      if (devPortalError) devPortalError.style.display = 'none';
+
+      const isAdminEmail = email.toLowerCase() === CONFIG.adminLoginEmail.toLowerCase();
+      const isAdminPassword = password === CONFIG.adminPasscode;
+      const isAdmin = isAdminEmail && isAdminPassword;
+
+      if (isAdmin) {
+        closeDevPortal();
+        openAdminLogbookModal();
+        return;
+      }
+
+      if (devPortalNonAdmin) devPortalNonAdmin.style.display = 'block';
+    });
+  }
+
+  if (btnDevPortalLookup) {
+    btnDevPortalLookup.addEventListener('click', () => {
+      closeDevPortal();
+      openLookupModal();
+    });
+  }
+  if (btnDevPortalContinue) {
+    btnDevPortalContinue.addEventListener('click', () => {
+      closeDevPortal();
     });
   }
 
@@ -1284,6 +1663,25 @@ function setupEventListeners() {
       updateCheckoutPanel();
     }
   });
+
+  const updateSignedCopyUI = () => {
+    if (!elements.signedCopyUploadGroup) return;
+    const showUpload = elements.inputSignedCopyOnline && elements.inputSignedCopyOnline.checked;
+    elements.signedCopyUploadGroup.style.display = showUpload ? 'flex' : 'none';
+    if (elements.inputSignedCopyFiles) {
+      elements.inputSignedCopyFiles.required = showUpload;
+    }
+    if (!showUpload && elements.inputSignedCopyFiles) {
+      elements.inputSignedCopyFiles.value = '';
+    }
+  };
+  if (elements.inputSignedCopyOnline) {
+    elements.inputSignedCopyOnline.addEventListener('change', updateSignedCopyUI);
+  }
+  if (elements.inputSignedCopyPhysical) {
+    elements.inputSignedCopyPhysical.addEventListener('change', updateSignedCopyUI);
+  }
+  updateSignedCopyUI();
 
   // Test Mode bypass registration
   elements.btnTestBypass.addEventListener('click', () => {
@@ -1539,10 +1937,7 @@ function setupEventListeners() {
 
   if (btnAdminOpen) {
     btnAdminOpen.addEventListener('click', () => {
-      // Re-load reservations to get fresh database changes from Supabase
-      loadReservations();
-      renderAdminTable();
-      if (modalAdmin) modalAdmin.classList.add('active');
+      openAdminLogbookModal();
     });
   }
 
@@ -1598,23 +1993,7 @@ function setupEventListeners() {
   if (linkLookup) {
     linkLookup.addEventListener('click', (e) => {
       e.preventDefault();
-      // Reset lookup search fields and results states
-      if (inputLookupEmail) inputLookupEmail.value = '';
-      if (inputLookupTxid) inputLookupTxid.value = '';
-      const inputLookupName = document.getElementById('input-lookup-name');
-      const inputLookupPhone = document.getElementById('input-lookup-phone');
-      if (inputLookupName) inputLookupName.value = '';
-      if (inputLookupPhone) inputLookupPhone.value = '';
-      
-      switchLookupTab('txid');
-      
-      document.getElementById('lookup-loading').style.display = 'none';
-      document.getElementById('lookup-error').style.display = 'none';
-      document.getElementById('lookup-results').style.display = 'none';
-      document.getElementById('lookup-success').style.display = 'none';
-      document.getElementById('form-lookup').style.display = 'flex';
-      
-      if (modalLookup) modalLookup.classList.add('active');
+      openLookupModal();
     });
   }
 
@@ -1663,8 +2042,18 @@ function validateForm() {
   const emailVal = elements.inputEmail.value.trim();
   const phoneVal = elements.inputPhone.value.trim();
   const businessVal = elements.inputBusiness.value.trim();
+  const permitNumVal = elements.inputPermitNumber ? elements.inputPermitNumber.value.trim() : "";
+  const permitExpiryVal = elements.inputPermitExpiry ? elements.inputPermitExpiry.value.trim() : "";
+  const permitConfirmVal = elements.inputPermitConfirm ? elements.inputPermitConfirm.checked : false;
+  const docAppPdfConfirmed = elements.inputDocAppPdf ? elements.inputDocAppPdf.checked : false;
+  const docAppXlsxConfirmed = elements.inputDocAppXlsx ? elements.inputDocAppXlsx.checked : false;
+  const docRulesConfirmed = elements.inputDocRules ? elements.inputDocRules.checked : false;
+  const signedOnline = elements.inputSignedCopyOnline ? elements.inputSignedCopyOnline.checked : false;
+  const signedPhysical = elements.inputSignedCopyPhysical ? elements.inputSignedCopyPhysical.checked : false;
+  const signedFilesCount = elements.inputSignedCopyFiles && elements.inputSignedCopyFiles.files ? elements.inputSignedCopyFiles.files.length : 0;
   
   const errors = [];
+  const requiresPermit = selectedBooth && categoryNeedsFoodPermit(selectedBooth.category);
   
   if (nameVal === "") {
     errors.push(t('label_contact_name').replace(' *', ''));
@@ -1682,6 +2071,35 @@ function validateForm() {
   
   if (businessVal === "") {
     errors.push(t('label_business').replace(' *', ''));
+  }
+
+  if (!docAppPdfConfirmed) {
+    errors.push(t('error_doc_app_pdf_required'));
+  }
+  if (!docAppXlsxConfirmed) {
+    errors.push(t('error_doc_app_xlsx_required'));
+  }
+  if (!docRulesConfirmed) {
+    errors.push(t('error_doc_rules_required'));
+  }
+
+  if (!signedOnline && !signedPhysical) {
+    errors.push(t('error_signed_copy_method_required'));
+  }
+  if (signedOnline && signedFilesCount === 0) {
+    errors.push(t('error_signed_copy_upload_required'));
+  }
+
+  if (requiresPermit) {
+    if (permitNumVal === "") {
+      errors.push(t('error_permit_number_required'));
+    }
+    if (permitExpiryVal === "") {
+      errors.push(t('error_permit_expiry_required'));
+    }
+    if (!permitConfirmVal) {
+      errors.push(t('error_permit_confirm_required'));
+    }
   }
   
   if (errors.length > 0) {
@@ -1778,7 +2196,7 @@ function renderPayPalButtons(price, description) {
 // --- BOOKING COMPLETION & RECEIPT GENERATOR ---
 function completeBooking(transactionId) {
   const catMeta = CONFIG.categories[selectedBooth.category];
-  const pricePaid = selectedPaymentMode === 'deposit' ? catMeta.depositPrice : catMeta.fullPrice;
+  const pricePaid = selectedPaymentMode === 'deposit' ? catMeta.depositPrice : getFullRegistrationTotal(catMeta);
   const payModeLabel = selectedPaymentMode === 'deposit' ? "Deposit Payment Only" : "Full Registration Fee";
 
   // Create booking object
@@ -1790,6 +2208,20 @@ function completeBooking(transactionId) {
     email: elements.inputEmail.value.trim(),
     phone: elements.inputPhone.value.trim(),
     business: elements.inputBusiness.value.trim(),
+    docsAgreement: {
+      appPdf: elements.inputDocAppPdf ? elements.inputDocAppPdf.checked : false,
+      appXlsx: elements.inputDocAppXlsx ? elements.inputDocAppXlsx.checked : false,
+      rules: elements.inputDocRules ? elements.inputDocRules.checked : false
+    },
+    signedCopyMethod: elements.inputSignedCopyOnline && elements.inputSignedCopyOnline.checked ? 'online' : 'physical',
+    signedCopySubmitted: elements.inputSignedCopyOnline && elements.inputSignedCopyOnline.checked,
+    signedCopyStatus: elements.inputSignedCopyOnline && elements.inputSignedCopyOnline.checked ? 'online_submitted' : 'pending_physical',
+    signedCopyFiles: elements.inputSignedCopyFiles && elements.inputSignedCopyFiles.files
+      ? Array.from(elements.inputSignedCopyFiles.files).map(f => f.name)
+      : [],
+    foodPermitRequired: categoryNeedsFoodPermit(selectedBooth.category),
+    permitNumber: elements.inputPermitNumber ? elements.inputPermitNumber.value.trim() : "",
+    permitExpiry: elements.inputPermitExpiry ? elements.inputPermitExpiry.value : "",
     pricePaid: `$${pricePaid}`,
     payMode: payModeLabel,
     transactionId: transactionId,
@@ -1808,6 +2240,19 @@ function completeBooking(transactionId) {
   elements.recName.textContent = booking.name;
   elements.recEmail.textContent = booking.email;
   elements.recPhone.textContent = booking.phone;
+  if (elements.receiptPermitRow && elements.recPermit) {
+    if (booking.foodPermitRequired) {
+      elements.receiptPermitRow.style.display = 'flex';
+      const permitParts = [booking.permitNumber];
+      if (booking.permitExpiry) {
+        permitParts.push(`Exp: ${booking.permitExpiry}`);
+      }
+      elements.recPermit.textContent = permitParts.filter(Boolean).join(' | ');
+    } else {
+      elements.receiptPermitRow.style.display = 'none';
+      elements.recPermit.textContent = '--';
+    }
+  }
   
   let dispId = selectedBooth.id;
   if (selectedBooth.id === "1-L" || selectedBooth.id === "1-R") dispId = "1";
@@ -1819,10 +2264,15 @@ function completeBooking(transactionId) {
   elements.recPaymentMethod.textContent = getPaymentMethodFromTxId(booking.transactionId);
   elements.recTransactionId.textContent = booking.transactionId.replace(/^(paypal:|stripe:)/, '');
   elements.recDate.textContent = booking.date;
+  if (elements.recSignedDocs) {
+    elements.recSignedDocs.textContent = getSignedDocsStatusLabel(getBookingSignedCopyStatus(booking));
+  }
   elements.recTotalPaid.textContent = booking.pricePaid;
 
   // Clear form fields
   elements.formBooking.reset();
+  if (elements.signedCopyUploadGroup) elements.signedCopyUploadGroup.style.display = 'none';
+  if (elements.inputSignedCopyFiles) elements.inputSignedCopyFiles.required = false;
   
   // Show Modal receipt
   elements.modalReceipt.classList.add('active');
@@ -1848,6 +2298,8 @@ function renderAdminTable(searchQuery = '') {
       (b.business && b.business.toLowerCase().includes(query)) ||
       (b.name && b.name.toLowerCase().includes(query)) ||
       (b.email && b.email.toLowerCase().includes(query)) ||
+      (b.permitNumber && b.permitNumber.toLowerCase().includes(query)) ||
+      (getSignedDocsStatusLabel(getBookingSignedCopyStatus(b)).toLowerCase().includes(query)) ||
       (b.transactionId && b.transactionId.toLowerCase().includes(query))
     );
   });
@@ -1895,6 +2347,14 @@ function renderAdminTable(searchQuery = '') {
 
       const payMethodVal = getPaymentMethodFromTxId(b.transactionId);
       const cleanTxId = (b.transactionId || '').replace(/^(paypal:|stripe:)/g, '');
+      const signedDocsLabel = getSignedDocsStatusLabel(getBookingSignedCopyStatus(b));
+      const canMarkPhysicalReceived = getBookingSignedCopyStatus(b) === 'pending_physical';
+      const signedDocsCell = canMarkPhysicalReceived
+        ? `<div style="display:flex; flex-direction:column; gap:6px;">
+             <span>${escapeHtml(signedDocsLabel)}</span>
+             <button type="button" class="admin-mark-physical-btn" data-booth-id="${escapeHtml(b.boothId)}" style="border:1px solid var(--border-color); background:#1f2937; color:#e2e8f0; border-radius:8px; padding:4px 8px; font-size:0.72rem; cursor:pointer;">${escapeHtml(t('btn_mark_physical_received'))}</button>
+           </div>`
+        : escapeHtml(signedDocsLabel);
 
       tr.innerHTML = `
         <td style="font-weight: 700; color: var(--color-booth-selected);">#${dispId}</td>
@@ -1905,17 +2365,27 @@ function renderAdminTable(searchQuery = '') {
         <td style="font-weight: 700; color: #10b981;">${escapeHtml(b.pricePaid)}</td>
         <td style="font-size: 0.8rem; color: var(--text-secondary);">${escapeHtml(payModeTranslated)}</td>
         <td style="font-size: 0.8rem; font-weight: 600; color: #60a5fa;">${escapeHtml(payMethodVal)}</td>
+        <td style="font-size: 0.8rem;">${signedDocsCell}</td>
         <td style="font-size: 0.8rem;">${escapeHtml(b.date)}</td>
         <td style="font-family: monospace; font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(cleanTxId)}</td>
       `;
       tbody.appendChild(tr);
+      const markBtn = tr.querySelector('.admin-mark-physical-btn');
+      if (markBtn) {
+        markBtn.addEventListener('click', () => {
+          const boothId = markBtn.getAttribute('data-booth-id');
+          if (boothId) {
+            markPhysicalCopySubmitted(boothId);
+          }
+        });
+      }
     });
   }
 }
 
 // Generate CSV string and trigger browser file download (Excel spreadsheet format)
 function exportCSV() {
-  const headers = ["Booth #", "Business / Vendor", "Contact Name", "Email", "Phone", "Price Paid", "Payment Mode", "Payment Method", "Date", "Transaction ID"];
+  const headers = ["Booth #", "Business / Vendor", "Contact Name", "Email", "Phone", "Food Permit Required", "Permit Number", "Permit Expiry", "Signed Copy Method", "Signed Docs Status", "Signed Copy Submitted", "Signed Files", "Price Paid", "Payment Mode", "Payment Method", "Date", "Transaction ID"];
   const csvRows = [headers.join(",")];
   
   // Sort by booth ID numerically before exporting
@@ -1931,6 +2401,10 @@ function exportCSV() {
     
     const payMethodVal = getPaymentMethodFromTxId(b.transactionId);
     const cleanTxId = (b.transactionId || '').replace(/^(paypal:|stripe:)/g, '');
+    const signedCopyMethod = b.signedCopyMethod || (getBookingSignedCopyStatus(b) === 'online_submitted' ? 'online' : 'physical');
+    const signedDocsStatus = getSignedDocsStatusLabel(getBookingSignedCopyStatus(b));
+    const signedCopySubmitted = getBookingSignedCopyStatus(b) === 'online_submitted' || getBookingSignedCopyStatus(b) === 'physical_submitted';
+    const signedFiles = Array.isArray(b.signedCopyFiles) ? b.signedCopyFiles.join('; ') : '';
 
     const row = [
       `"${dispId}"`,
@@ -1938,6 +2412,13 @@ function exportCSV() {
       `"${(b.name || '').replace(/"/g, '""')}"`,
       `"${(b.email || '').replace(/"/g, '""')}"`,
       `"${(b.phone || '').replace(/"/g, '""')}"`,
+      `"${b.foodPermitRequired ? 'Yes' : 'No'}"`,
+      `"${(b.permitNumber || '').replace(/"/g, '""')}"`,
+      `"${(b.permitExpiry || '').replace(/"/g, '""')}"`,
+      `"${(signedCopyMethod || '').replace(/"/g, '""')}"`,
+      `"${(signedDocsStatus || '').replace(/"/g, '""')}"`,
+      `"${signedCopySubmitted ? 'Yes' : 'No'}"`,
+      `"${(signedFiles || '').replace(/"/g, '""')}"`,
       `"${(b.pricePaid || '').replace(/"/g, '""')}"`,
       `"${(b.payMode || '').replace(/"/g, '""')}"`,
       `"${payMethodVal}"`,
@@ -2044,6 +2525,9 @@ async function performLookup(email, transactionId, name, phone) {
         business_name: foundRow.business,
         email: foundRow.email,
         phone: foundRow.phone,
+        food_permit_required: foundRow.foodPermitRequired ? true : false,
+        permit_number: foundRow.permitNumber || "",
+        permit_expiry: foundRow.permitExpiry || "",
         price_paid: foundRow.pricePaid,
         payment_mode: foundRow.payMode,
         transaction_id: foundRow.transactionId
@@ -2095,7 +2579,7 @@ function displayLookupResults(row) {
     // Balance due details lookup & calculation
     const booth = CONFIG.booths.find(b => b.id === row.booth_id);
     const catMeta = booth ? CONFIG.categories[booth.category] : null;
-    const fullPrice = catMeta ? catMeta.fullPrice : 0;
+    const fullPrice = catMeta ? getFullRegistrationTotal(catMeta) : 0;
     const paidAmount = parseFloat(row.price_paid.replace('$', '')) || 0;
     const balanceDue = Math.max(0, fullPrice - paidAmount);
 
@@ -2235,7 +2719,7 @@ async function completeBalancePayment(row, balanceDue, balanceTxId) {
   // Calculate new total price paid values
   const booth = CONFIG.booths.find(b => b.id === row.booth_id);
   const catMeta = booth ? CONFIG.categories[booth.category] : null;
-  const fullPrice = catMeta ? catMeta.fullPrice : 0;
+  const fullPrice = catMeta ? getFullRegistrationTotal(catMeta) : 0;
   
   const updatedPricePaid = `$${fullPrice}`;
   const updatedPayMode = "Full Registration Fee";
@@ -2399,5 +2883,3 @@ Object.defineProperty(window, 'selectedBalancePaymentMethod', {
   configurable: true,
   enumerable: true
 });
-
-

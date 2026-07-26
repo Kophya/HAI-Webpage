@@ -21,13 +21,14 @@
     <div class="brand">
       <!-- Logo Placeholder - Swap with <img> to customize -->
       <div class="logo-placeholder" id="brand-logo">
-        HAI
+        <img src="assets/hai-logo.png?v=20260726a" alt="HAI logo" class="logo-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <span class="logo-fallback" style="display:none;">HAI</span>
       </div>
       <div class="brand-text">
         <h1 id="brand-title" data-i18n="brand_title">Hmong Association, Inc</h1>
         <p id="brand-subtitle">
           <span data-i18n="brand_subtitle">Arkansas Merchandise/Vendors Layout & Reservations</span>
-          <span style="color: #ef4444; font-weight: 700; margin-left: 8px;" data-i18n="scale_note">(Note: Dimensions and layout are not to scale)</span>
+          <span class="scale-note" data-i18n="scale_note">(Note: Dimensions and layout are not to scale)</span>
         </p>
       </div>
     </div>
@@ -35,6 +36,9 @@
       <!-- Language Switcher Toggle Button (English <-> Hmong) -->
       <button class="btn-secondary" id="btn-language-toggle" title="Switch Language / Hloov Lus">
         🌐 English
+      </button>
+      <button class="btn-secondary" id="btn-dev-portal" data-i18n="btn_dev_portal" title="Open Dev Portal Login">
+        🛠 Dev Portal
       </button>
       <!-- Hidden Admin Panel Button (revealed only via secret URL query param) -->
       <button class="btn-secondary" id="btn-admin-dashboard" style="display: none; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); font-weight: 600;" title="Open Bookkeeping Reservation Logbook" data-i18n="btn_admin_dashboard">
@@ -85,7 +89,7 @@
         <!-- Selection Hint -->
         <div class="legend-item" style="margin-left: auto;">
           <div class="legend-color color-selected"></div>
-          <span style="font-weight: 600; color: #fff;" data-i18n="legend_selected">Selected</span>
+          <span class="legend-selected-text" data-i18n="legend_selected">Selected</span>
         </div>
       </div>
 
@@ -123,6 +127,15 @@
       <div class="checkout-title">
         <h2 data-i18n="sidebar_title">Reserve Spot</h2>
         <p data-i18n="sidebar_subtitle">Select an available booth on the layout to begin</p>
+      </div>
+      <div class="reservation-steps" aria-label="Reservation steps">
+        <h3 data-i18n="reserve_steps_title">How to Reserve</h3>
+        <ol>
+          <li data-i18n="reserve_step_1">Select an available booth on the map.</li>
+          <li data-i18n="reserve_step_2">Choose payment amount (deposit or full, when available).</li>
+          <li data-i18n="reserve_step_3">Fill in your contact and business details.</li>
+          <li data-i18n="reserve_step_4">Complete payment with PayPal or Stripe to confirm your reservation.</li>
+        </ol>
       </div>
 
       <!-- State 1: No booth selected -->
@@ -193,6 +206,69 @@
           <div class="form-group">
             <label for="input-business" data-i18n="label_business">Business / Vendor Name *</label>
             <input type="text" id="input-business" class="form-control" placeholder="ABC Merchandise Co." data-i18n-placeholder="placeholder_business" required>
+          </div>
+
+          <div class="permit-block" id="permit-block" style="display: none;">
+            <p class="permit-note" data-i18n="permit_required_note">Food and Boba vendors must provide a valid Food Handler Permit before reservation can be completed.</p>
+            <div class="form-group">
+              <label for="input-permit-number" data-i18n="label_permit_number">Food Handler Permit Number *</label>
+              <input type="text" id="input-permit-number" class="form-control" placeholder="FH-123456" data-i18n-placeholder="placeholder_permit_number">
+            </div>
+            <div class="form-group">
+              <label for="input-permit-expiry" data-i18n="label_permit_expiry">Permit Expiration Date *</label>
+              <input type="date" id="input-permit-expiry" class="form-control">
+            </div>
+            <label class="permit-confirm">
+              <input type="checkbox" id="input-permit-confirm">
+              <span data-i18n="label_permit_confirm">I confirm this permit is valid and belongs to this vendor.</span>
+            </label>
+          </div>
+
+          <div class="required-docs-block" id="required-docs-block">
+            <p class="required-docs-title" data-i18n="docs_required_title">Required Vendor Papers</p>
+            <p class="required-docs-note" data-i18n="docs_required_note">Before reserving, review/fill these papers and confirm each item below.</p>
+            <div class="required-doc-item">
+              <a href="assets/2026_EventVendorApplication-re.pdf" target="_blank" rel="noopener noreferrer" data-i18n="doc_app_pdf_link">Open Vendor Application (PDF)</a>
+              <label>
+                <input type="checkbox" id="input-doc-app-pdf">
+                <span data-i18n="doc_app_pdf_confirm">I completed and agree to this paper.</span>
+              </label>
+            </div>
+            <div class="required-doc-item">
+              <a href="assets/2026_EventVendorApplication-re.xlsx" target="_blank" rel="noopener noreferrer" data-i18n="doc_app_xlsx_link">Open Vendor Application (Excel)</a>
+              <label>
+                <input type="checkbox" id="input-doc-app-xlsx">
+                <span data-i18n="doc_app_xlsx_confirm">I completed and agree to this paper.</span>
+              </label>
+            </div>
+            <div class="required-doc-item">
+              <a href="assets/2026_VendorRules.pdf" target="_blank" rel="noopener noreferrer" data-i18n="doc_rules_link">Open Vendor Rules (PDF)</a>
+              <label>
+                <input type="checkbox" id="input-doc-rules">
+                <span data-i18n="doc_rules_confirm">I read and agree to these rules.</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="signed-copy-block" id="signed-copy-block">
+            <p class="required-docs-title" data-i18n="signed_copy_title">Signed Copy Submission *</p>
+            <p class="required-docs-note" data-i18n="signed_copy_note">Choose how you will submit signed papers. Online upload is optional if you will submit physical copies.</p>
+            <div class="required-doc-item">
+              <label>
+                <input type="radio" name="signed-copy-method" id="input-signed-copy-online" value="online">
+                <span data-i18n="signed_copy_option_online">I am submitting signed copies online now.</span>
+              </label>
+              <div class="form-group" id="signed-copy-upload-group" style="display: none;">
+                <label for="input-signed-copy-files" data-i18n="label_signed_copy_upload">Upload Signed Copies *</label>
+                <input type="file" id="input-signed-copy-files" class="form-control" accept=".pdf,.png,.jpg,.jpeg" multiple>
+              </div>
+            </div>
+            <div class="required-doc-item">
+              <label>
+                <input type="radio" name="signed-copy-method" id="input-signed-copy-physical" value="physical">
+                <span data-i18n="signed_copy_option_physical">I will submit physical signed copies in person.</span>
+              </label>
+            </div>
           </div>
 
           <!-- Payment Method Selector & Containers -->
@@ -324,6 +400,10 @@
               <span class="receipt-label" data-i18n="receipt_label_phone">Phone</span>
               <span class="receipt-value" id="rec-phone">--</span>
             </div>
+            <div class="receipt-row" id="receipt-permit-row" style="display: none;">
+              <span class="receipt-label" data-i18n="receipt_label_permit">Food Handler Permit</span>
+              <span class="receipt-value" id="rec-permit">--</span>
+            </div>
           </div>
         </div>
 
@@ -365,6 +445,10 @@
             <div class="receipt-row">
               <span class="receipt-label" data-i18n="receipt_label_date">Date & Time</span>
               <span class="receipt-value" id="rec-date">--</span>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-label" data-i18n="receipt_label_signed_docs">Signed Documents</span>
+              <span class="receipt-value" id="rec-signed-docs">--</span>
             </div>
           </div>
           
@@ -435,6 +519,7 @@
                 <th style="width: 110px;" data-i18n="admin_th_price">Price Paid</th>
                 <th data-i18n="admin_th_mode">Payment Mode</th>
                 <th data-i18n="admin_th_paymethod">Payment Method</th>
+                <th data-i18n="admin_th_signed_docs">Signed Docs</th>
                 <th data-i18n="admin_th_date">Date & Time</th>
                 <th data-i18n="admin_th_txid">Transaction ID</th>
               </tr>
@@ -454,6 +539,56 @@
         <button class="admin-btn-export" id="btn-admin-export" data-i18n="btn_admin_export">📥 Export to Excel (CSV)</button>
         <button class="admin-btn-print" id="btn-admin-print" data-i18n="btn_admin_print">🖨 Print Logbook</button>
         <button class="admin-btn-close" id="btn-admin-close" data-i18n="btn_admin_close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEV PORTAL ACCESS MODAL -->
+  <div class="modal-overlay" id="modal-dev-portal">
+    <div class="dev-portal-modal">
+      <div class="lookup-header">
+        <div class="lookup-header-title">
+          <span class="lookup-icon">🛠</span>
+          <div>
+            <h3 data-i18n="dev_portal_title">Dev Portal Login</h3>
+            <p data-i18n="dev_portal_subtitle">Enter admin email and password to continue.</p>
+          </div>
+        </div>
+        <button class="lookup-btn-close-x" id="btn-dev-portal-close-x">&times;</button>
+      </div>
+
+      <div class="lookup-content">
+        <form id="form-dev-portal" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 14px;">
+          <div class="form-group">
+            <label for="input-dev-portal-email" data-i18n="dev_portal_label_email">Admin Email *</label>
+            <input type="email" id="input-dev-portal-email" class="form-control" data-i18n-placeholder="dev_portal_placeholder_email" placeholder="admin@example.com" required>
+          </div>
+          <div class="form-group">
+            <label for="input-dev-portal-password" data-i18n="dev_portal_label_password">Admin Password *</label>
+            <input type="password" id="input-dev-portal-password" class="form-control" data-i18n-placeholder="dev_portal_placeholder_password" placeholder="Enter password" required>
+          </div>
+          <button class="btn-primary" id="btn-dev-portal-submit" type="submit" style="width: 100%; padding: 12px; font-weight: 700;" data-i18n="dev_portal_btn_login">
+            Continue to Dev Portal
+          </button>
+          <button class="test-bypass-btn" id="btn-dev-portal-skip" type="button" data-i18n="dev_portal_btn_skip">
+            ⚡ Skip Login (Test Mode)
+          </button>
+        </form>
+
+        <div id="dev-portal-error" class="lookup-alert-error" style="display:none; background: #fef2f2; border: 1px solid #ef4444; color: #991b1b; padding: 14px; border-radius: var(--border-radius-md); font-size: 0.85rem; line-height: 1.4; margin-top: 12px;"></div>
+
+        <div id="dev-portal-non-admin" class="dev-portal-note" style="display:none;">
+          <strong data-i18n="dev_portal_non_admin_title">Not an admin?</strong>
+          <p data-i18n="dev_portal_non_admin_hint">If you're not an admin, try Look Up Reservation to check your booking or pay a remaining balance.</p>
+          <div class="dev-portal-note-actions">
+            <button type="button" class="btn-secondary" id="btn-dev-portal-lookup" data-i18n="dev_portal_btn_lookup">Look Up Reservation</button>
+            <button type="button" class="btn-secondary" id="btn-dev-portal-continue" data-i18n="dev_portal_btn_continue">Continue Anyway</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="lookup-footer" style="display: flex; justify-content: flex-end; border-top: 1px solid var(--border-color); padding-top: 16px; margin-top: 20px;">
+        <button class="admin-btn-close" id="btn-dev-portal-close" data-i18n="btn_close">Close</button>
       </div>
     </div>
   </div>
