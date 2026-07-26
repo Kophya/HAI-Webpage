@@ -183,14 +183,15 @@ header {
   display: flex;
   flex: 1;
   position: relative;
-  height: calc(100vh - 90px);
-  max-height: calc(100vh - 90px); /* Strictly constrain height to viewport on desktop, preventing content from expanding page vertically */
-  min-height: 760px;
-  overflow: hidden;
+  height: auto;
+  min-height: clamp(640px, calc(100dvh - 110px), 980px);
+  max-height: none;
+  overflow: visible;
   padding: 20px;
   gap: 18px;
   width: min(1500px, 100%);
   margin: 0 auto;
+  align-items: flex-start;
 }
 
 /* LEFT SIDE: MAP WORKSPACE */
@@ -199,9 +200,9 @@ header {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  height: 100%;
+  height: auto;
+  min-height: clamp(580px, calc(100dvh - 140px), 900px);
   min-width: 0; /* Prevents zoomed map canvas from expanding workspace width and pushing checkout out of view */
-  min-height: 0; /* Prevents zoomed map canvas from expanding workspace height and causing vertical page overflow */
 }
 
 /* Redesigned Legend: Much larger, cleaner, and easier to see */
@@ -277,16 +278,16 @@ header {
 .map-board-wrapper {
   position: relative;
   width: 100%;
-  height: auto; /* Let flex: 1 resolve height dynamically in flex parent */
-  min-height: 0; /* Prevents zoomed map canvas from expanding wrapper height */
-  flex: 1;
+  height: clamp(460px, calc(100dvh - 260px), 820px);
+  min-height: 460px;
+  flex: none;
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-lg);
   overflow: hidden; /* Guarantee outer wrapper never scrolls */
   box-shadow: none;
   background: #ffffff;
   display: flex;
-  padding: 24px;
+  padding: 16px;
 }
 
 /* Unified Canvas Wrapper containing Satellite view and SVG overlay */
@@ -298,8 +299,8 @@ header {
   box-shadow: none;
   border: 1px solid var(--border-color);
   aspect-ratio: 1000 / 1050;
-  width: 100%;
-  height: auto;
+  width: auto;
+  height: 100%;
   max-width: 100%;
   max-height: 100%;
   flex: none;
@@ -425,7 +426,9 @@ header {
   box-shadow: none;
   align-self: flex-start; /* Fit content height instead of stretching */
   flex-shrink: 0;
-  max-height: 100%; /* Prevent sidebar from expanding past app container height */
+  position: sticky;
+  top: 86px;
+  max-height: calc(100dvh - 100px);
   overflow-y: auto; /* Enable vertical scroll if checkout form is taller than viewport */
 }
 
@@ -1136,7 +1139,7 @@ header {
     flex-direction: column;
     height: auto;
     min-height: 0;
-    max-height: none; /* Crucial: removes desktop viewport height limit on mobile */
+    max-height: none;
     overflow: visible;
     padding: 16px;
     gap: 16px;
@@ -1145,7 +1148,8 @@ header {
   .sidebar-checkout {
     width: 100%;
     height: auto;
-    max-height: none; /* Crucial: removes max-height limit on mobile */
+    max-height: none;
+    position: static;
     align-self: stretch;
   }
   
@@ -1159,12 +1163,13 @@ header {
     height: 550px;
     min-height: 550px;
     display: block;
+    padding: 12px;
   }
 
   .map-canvas-wrapper {
-    width: 100%;
-    height: 502px;
-    aspect-ratio: auto;
+    width: auto;
+    height: 100%;
+    aspect-ratio: 1000 / 1050;
     margin: 0;
   }
   
@@ -1192,11 +1197,33 @@ header {
     padding: 16px;
     gap: 16px;
   }
+
+  .map-board-wrapper {
+    height: clamp(390px, 62vh, 520px);
+    min-height: 390px;
+    padding: 8px;
+  }
+
+  .zoom-controls {
+    top: 10px;
+    right: 10px;
+    padding: 5px 8px;
+    gap: 6px;
+  }
+
+  .zoom-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .location-container {
+    padding: 0 12px 16px 12px;
+  }
 }
 
 /* --- LOCATION CONTAINER --- */
 .location-container {
-  padding: 0 24px 24px 24px;
+  padding: 10px 24px 24px 24px;
   display: flex;
   justify-content: center;
   width: 100%;
@@ -1212,7 +1239,7 @@ header {
   flex-direction: column;
   gap: 16px;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-  max-width: 1200px;
+  max-width: 1500px;
   width: 100%;
 }
 
@@ -1241,7 +1268,13 @@ header {
   width: 100%;
   border-radius: var(--border-radius-md);
   overflow: hidden;
-  border: 2px solid var(--border-color);
+  border: 1px solid var(--border-color);
+}
+
+.location-map-wrapper iframe {
+  width: 100%;
+  height: clamp(260px, 32vw, 420px);
+  border: 0;
 }
 
 .map-placeholder {
