@@ -132,7 +132,7 @@
         <h3 data-i18n="reserve_steps_title">How to Reserve</h3>
         <ol>
           <li data-i18n="reserve_step_1">Select an available booth on the map.</li>
-          <li data-i18n="reserve_step_2">Choose payment amount (deposit or full, when available).</li>
+          <li data-i18n="reserve_step_2">Review the deposit + booth fee total, then pay the full amount.</li>
           <li data-i18n="reserve_step_3">Fill in your contact and business details.</li>
           <li data-i18n="reserve_step_4">Complete payment with PayPal or Stripe to confirm your reservation.</li>
         </ol>
@@ -163,20 +163,14 @@
           </div>
         </div>
 
-        <!-- Payment option selector (For Food and Boba where Deposit != Full) -->
+        <!-- Payment amount display -->
         <div class="payment-type-selector" id="payment-options-block">
           <span class="payment-type-label" data-i18n="label_payment_amount">Select Payment Amount</span>
           <div class="payment-options">
-            <!-- Option A: Deposit -->
-            <button class="payment-option-btn selected" id="btn-pay-deposit" type="button">
-              <span class="payment-option-title" data-i18n="payment_option_deposit">Pay Deposit</span>
-              <span class="payment-option-price" id="price-deposit">$0</span>
-            </button>
-            <!-- Option B: Full Registration -->
-            <button class="payment-option-btn" id="btn-pay-full" type="button">
+            <div class="payment-option-btn selected" style="cursor: default; width: 100%;">
               <span class="payment-option-title" data-i18n="payment_option_full">Full Registration</span>
               <span class="payment-option-price" id="price-full">$0</span>
-            </button>
+            </div>
           </div>
         </div>
 

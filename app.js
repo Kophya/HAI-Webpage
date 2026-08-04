@@ -145,7 +145,7 @@ const CONFIG = {
 
 // --- APPLICATION STATE ---
 let selectedBooth = null;       // Currently selected booth object
-let selectedPaymentMode = 'deposit'; // 'deposit' or 'full'
+let selectedPaymentMode = 'full'; // Full registration only
 let localReservations = {};     // Map of booked booths from localStorage
 const PRERESERVED_IDS = ["2", "3", "12", "28", "33", "47", "48", "49", "50", "53", "55", "57", "57A"]; // Booths pre-reserved by the organizer
 let currentZoom = 1.0;          // Floor plan zoom level (1.0 = 100%)
@@ -229,7 +229,7 @@ const TRANSLATIONS = {
     sidebar_subtitle: "Select an available booth on the layout to begin",
     reserve_steps_title: "How to Reserve",
     reserve_step_1: "Select an available booth on the map.",
-    reserve_step_2: "Choose payment amount (deposit or full, when available).",
+    reserve_step_2: "Review the deposit + booth fee total, then pay the full amount.",
     reserve_step_3: "Fill in your contact and business details.",
     reserve_step_4: "Complete payment with PayPal or Stripe to confirm your reservation.",
     checkout_empty_hint: "Click on any light-colored booth (white, peach, green, blue) on the floor map to configure your registration.",
@@ -237,7 +237,6 @@ const TRANSLATIONS = {
     label_category: "Category",
     label_dimensions: "Dimensions",
     label_payment_amount: "Select Payment Amount",
-    payment_option_deposit: "Pay Deposit",
     payment_option_full: "Full Registration",
     payment_fixed_title: "Registration Fee",
     payment_fixed_full: "Full Registration Fee",
@@ -445,7 +444,7 @@ const TRANSLATIONS = {
     sidebar_subtitle: "Xaiv ib lub booth uas tseem dawb hauv daim phiaj kom pib",
     reserve_steps_title: "Yuav Ceev Chaw Li Cas",
     reserve_step_1: "Xaiv ib lub booth uas tseem dawb hauv daim phiaj.",
-    reserve_step_2: "Xaiv hom nyiaj them (deposit lossis them tag nrho, yog muaj).",
+    reserve_step_2: "Saib tus nqi deposit + lub rooj muag khoom ces them tus nqi tag nrho.",
     reserve_step_3: "Sau koj cov ntaub ntawv tiv tauj thiab ntaub ntawv lag luam.",
     reserve_step_4: "Them nyiaj nrog PayPal lossis Stripe kom lees paub koj qhov kev ceev chaw.",
     checkout_empty_hint: "Nyem rau ib lub booth xim daj/ntsuab/xiav/dawb hauv daim phiaj kom pib kev sau npe.",
@@ -453,7 +452,6 @@ const TRANSLATIONS = {
     label_category: "Hom Chaw",
     label_dimensions: "Qhov Loj",
     label_payment_amount: "Xaiv Tus Nqi Them Nyiaj",
-    payment_option_deposit: "Them Deposit",
     payment_option_full: "Them Tag Nrho",
     payment_fixed_title: "Tus Nqi Sau Npe",
     payment_fixed_full: "Tus Nqi Sau Npe Tag Nrho",
@@ -757,7 +755,7 @@ function updateLookupModalTranslation() {
   const recPayMode = document.getElementById('rec-pay-mode');
   if (recPayMode && recPayMode.textContent) {
     const currentText = recPayMode.textContent.trim();
-    if (currentText.startsWith("Deposit Paid") || currentText.startsWith("Them Ceev Lawm") || currentText.startsWith("Deposit Payment Only")) {
+    if (currentText.startsWith("Deposit Paid") || currentText.startsWith("Them Ceev Lawm") || currentText.startsWith("Full Registration Fee")) {
       const match = currentText.match(/\d+/);
       const priceStr = match ? match[0] : "";
       recPayMode.textContent = t('status_deposit') + priceStr + ")";
@@ -778,9 +776,7 @@ const elements = {
   dispBoothCategory: document.getElementById('disp-booth-category'),
   dispBoothDimensions: document.getElementById('disp-booth-dimensions'),
   paymentOptionsBlock: document.getElementById('payment-options-block'),
-  priceDeposit: document.getElementById('price-deposit'),
   priceFull: document.getElementById('price-full'),
-  btnPayDeposit: document.getElementById('btn-pay-deposit'),
   btnPayFull: document.getElementById('btn-pay-full'),
   btnTestBypass: document.getElementById('btn-test-bypass'),
   btnResetCache: document.getElementById('btn-reset-cache'),
@@ -1386,8 +1382,8 @@ function hideTooltip() {
 // --- SELECTION CONTROL ---
 function handleBoothSelect(booth) {
   selectedBooth = booth;
-  // Reset payment option to deposit
-  selectedPaymentMode = 'deposit';
+  // Full payment is required for all reservations
+  selectedPaymentMode = 'full';
   
   updateCheckoutPanel();
   renderMap(); // Redraw map to draw selection border
@@ -1493,32 +1489,18 @@ function updateCheckoutPanel() {
       fixedPriceBlock.style.display = "flex";
       document.getElementById("disp-fixed-price").textContent = `$${catMeta.fullPrice}`;
     }
-    selectedPaymentMode = 'full'; // enforce full payment type
+    selectedPaymentMode = 'full';
   } else {
     elements.paymentOptionsBlock.style.display = "flex";
-    if (fixedPriceBlock) {
-      fixedPriceBlock.style.display = "none";
-    }
-    // restore selected class
-    updatePaymentOptionsUI();
+    if (fixedPriceBlock) fixedPriceBlock.style.display = "none";
   }
 
   // Load active price
-  const currentPrice = selectedPaymentMode === 'deposit' ? catMeta.depositPrice : getFullRegistrationTotal(catMeta);
+  const currentPrice = getFullRegistrationTotal(catMeta);
   const description = `Registration for Booth #${dispId} (${catMeta.name})`;
 
   // Render PayPal SDK Checkout buttons
   renderPayPalButtons(currentPrice, description);
-}
-
-function updatePaymentOptionsUI() {
-  if (selectedPaymentMode === 'deposit') {
-    elements.btnPayDeposit.classList.add('selected');
-    elements.btnPayFull.classList.remove('selected');
-  } else {
-    elements.btnPayDeposit.classList.remove('selected');
-    elements.btnPayFull.classList.add('selected');
-  }
 }
 
 function openLookupModal() {
@@ -1647,22 +1629,12 @@ function setupEventListeners() {
     });
   }
 
-  // Payment Type button toggling
-  elements.btnPayDeposit.addEventListener('click', () => {
-    if (selectedPaymentMode !== 'deposit') {
-      selectedPaymentMode = 'deposit';
-      updatePaymentOptionsUI();
-      updateCheckoutPanel();
-    }
-  });
-
-  elements.btnPayFull.addEventListener('click', () => {
-    if (selectedPaymentMode !== 'full') {
+  if (elements.btnPayFull) {
+    elements.btnPayFull.addEventListener('click', () => {
       selectedPaymentMode = 'full';
-      updatePaymentOptionsUI();
       updateCheckoutPanel();
-    }
-  });
+    });
+  }
 
   const updateSignedCopyUI = () => {
     if (!elements.signedCopyUploadGroup) return;
@@ -2216,8 +2188,8 @@ function renderPayPalButtons(price, description) {
 // --- BOOKING COMPLETION & RECEIPT GENERATOR ---
 function completeBooking(transactionId) {
   const catMeta = CONFIG.categories[selectedBooth.category];
-  const pricePaid = selectedPaymentMode === 'deposit' ? catMeta.depositPrice : getFullRegistrationTotal(catMeta);
-  const payModeLabel = selectedPaymentMode === 'deposit' ? "Deposit Payment Only" : "Full Registration Fee";
+  const pricePaid = getFullRegistrationTotal(catMeta);
+  const payModeLabel = "Full Registration Fee";
 
   // Create booking object
   const booking = {
@@ -2359,9 +2331,7 @@ function renderAdminTable(searchQuery = '') {
       if (b.boothId === "1-L" || b.boothId === "1-R") dispId = "1";
       
       let payModeTranslated = b.payMode || '';
-      if (b.payMode === "Deposit Payment Only") {
-        payModeTranslated = t('payment_option_deposit');
-      } else if (b.payMode === "Full Registration Fee") {
+      if (b.payMode === "Full Registration Fee") {
         payModeTranslated = t('payment_fixed_full');
       }
 

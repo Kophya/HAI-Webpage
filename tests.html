@@ -459,10 +459,10 @@
           assert(doc.getElementById('checkout-empty').style.display === "none", "Checkout empty state panel is still visible");
           assert(doc.getElementById('checkout-active').style.display !== "none", "Checkout active form panel remains hidden");
           
-          // General booth is fixed price, verify dual options block is hidden
-          assert(doc.getElementById('payment-options-block').style.display === "none", "General booth should not show payment deposit/full selectors");
-          assert(doc.getElementById('fixed-price-block').style.display !== "none", "General booth should display fixed-price-block");
-          assert(doc.getElementById('disp-fixed-price').textContent === "$350", "Fixed price text should equal $350");
+          // Payment UI should always show full registration total
+          assert(doc.getElementById('payment-options-block').style.display !== "none", "Payment amount block should be visible");
+          assert(doc.getElementById('fixed-price-block').style.display === "none", "Fixed-price block should stay hidden");
+          assert(doc.getElementById('price-full').textContent === "$350", "Full price text should equal $350");
         }
       },
       {
