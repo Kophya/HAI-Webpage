@@ -1476,27 +1476,15 @@ function updateCheckoutPanel() {
   if (elements.inputSignedCopyFiles) elements.inputSignedCopyFiles.value = '';
   if (elements.signedCopyUploadGroup) elements.signedCopyUploadGroup.style.display = 'none';
 
-  // Render prices in selector
-  elements.priceDeposit.textContent = `$${catMeta.depositPrice}`;
-  elements.priceFull.textContent = `$${getFullRegistrationTotal(catMeta)}`;
-
-  // If Deposit is equal to Full registration (e.g. General, Fruits)
-  // we hide the dual selection options block and show a fixed amount info card
+  // Full payment is always shown; the label reflects deposit + booth fee total.
+  const currentPrice = getFullRegistrationTotal(catMeta);
+  elements.priceFull.textContent = `$${currentPrice}`;
+  elements.paymentOptionsBlock.style.display = "flex";
   const fixedPriceBlock = document.getElementById("fixed-price-block");
-  if (catMeta.depositPrice === catMeta.fullPrice) {
-    elements.paymentOptionsBlock.style.display = "none";
-    if (fixedPriceBlock) {
-      fixedPriceBlock.style.display = "flex";
-      document.getElementById("disp-fixed-price").textContent = `$${catMeta.fullPrice}`;
-    }
-    selectedPaymentMode = 'full';
-  } else {
-    elements.paymentOptionsBlock.style.display = "flex";
-    if (fixedPriceBlock) fixedPriceBlock.style.display = "none";
-  }
+  if (fixedPriceBlock) fixedPriceBlock.style.display = "none";
+  selectedPaymentMode = 'full';
 
   // Load active price
-  const currentPrice = getFullRegistrationTotal(catMeta);
   const description = `Registration for Booth #${dispId} (${catMeta.name})`;
 
   // Render PayPal SDK Checkout buttons
