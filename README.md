@@ -35,7 +35,7 @@ Optional flags:
 powershell -ExecutionPolicy Bypass -File .\scripts\run-tests.ps1 -Browser chrome -Timeout 90
 ```
 
-## Run AI layout audit (optional)
+## Run layout audit (optional)
 
 Set your API key in the current shell:
 

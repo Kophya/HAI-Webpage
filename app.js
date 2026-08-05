@@ -1,7 +1,6 @@
-/* 
-   Hmong Association, Inc (Arkansas) Merchandise/Vendors Layout
-   Core Javascript Logic - Interactive Booking & PayPal Sandbox Integration
-   Human-Readable, Well-Commented, and Easy to Maintain
+/*
+  Hmong Association, Inc (Arkansas) vendor reservation app.
+  Core booking, lookup, admin, and Supabase sync logic.
 */
 
 // --- CONFIGURATION & DATABASE ---
@@ -165,7 +164,7 @@ function getPaymentMethodFromTxId(txId) {
   } else if (hasStripe) {
     return "Stripe";
   } else {
-    return "PayPal"; // Default for legacy or prefixed paypal
+    return "PayPal";
   }
 }
 
@@ -207,7 +206,7 @@ const TRANSLATIONS = {
     dev_portal_label_password: "Admin Password *",
     dev_portal_placeholder_password: "Enter password",
     dev_portal_btn_login: "Continue to Dev Portal",
-    dev_portal_btn_skip: "⚡ Skip Login (Test Mode)",
+    dev_portal_btn_skip: "⚡ Skip Login",
     dev_portal_non_admin_title: "Not an admin?",
     dev_portal_non_admin_hint: "If you're not an admin, try Look Up Reservation to check your booking or pay a remaining balance.",
     dev_portal_btn_lookup: "Look Up Reservation",
@@ -400,9 +399,6 @@ const TRANSLATIONS = {
     error_permit_number_required: "Food Handler Permit Number (required for Food/Boba booths)",
     error_permit_expiry_required: "Permit Expiration Date (required for Food/Boba booths)",
     error_permit_confirm_required: "Permit confirmation checkbox (required for Food/Boba booths)",
-    error_doc_app_pdf_required: "Vendor Application (PDF) acknowledgment is required",
-    error_doc_app_xlsx_required: "Vendor Application (Excel) acknowledgment is required",
-    error_doc_rules_required: "Vendor Rules acknowledgment is required",
     error_signed_copy_method_required: "Signed copy submission method is required",
     error_signed_copy_upload_required: "Upload at least one signed copy file when submitting online",
     status_deposit: "Deposit Paid ($",
@@ -615,9 +611,6 @@ const TRANSLATIONS = {
     error_permit_number_required: "Tus Naj Npawb Food Handler Permit (yuav tsum muaj rau Food/Boba booths)",
     error_permit_expiry_required: "Hnub Permit Tas Sijhawm (yuav tsum muaj rau Food/Boba booths)",
     error_permit_confirm_required: "Yuav tsum xaiv checkbox lees permit (rau Food/Boba booths)",
-    error_doc_app_pdf_required: "Yuav tsum lees paub Vendor Application (PDF)",
-    error_doc_app_xlsx_required: "Yuav tsum lees paub Vendor Application (Excel)",
-    error_doc_rules_required: "Yuav tsum lees paub Vendor Rules",
     error_signed_copy_method_required: "Yuav tsum xaiv txoj kev xa daim ntawv kos npe",
     error_signed_copy_upload_required: "Thov upload tsawg kawg ib daim ntawv kos npe yog tias xa online",
     status_deposit: "Them Ceev Lawm ($",
@@ -787,9 +780,6 @@ const elements = {
   inputEmail: document.getElementById('input-email'),
   inputPhone: document.getElementById('input-phone'),
   inputBusiness: document.getElementById('input-business'),
-  inputDocAppPdf: document.getElementById('input-doc-app-pdf'),
-  inputDocAppXlsx: document.getElementById('input-doc-app-xlsx'),
-  inputDocRules: document.getElementById('input-doc-rules'),
   inputSignedCopyOnline: document.getElementById('input-signed-copy-online'),
   inputSignedCopyPhysical: document.getElementById('input-signed-copy-physical'),
   inputSignedCopyFiles: document.getElementById('input-signed-copy-files'),
@@ -942,86 +932,44 @@ async function loadReservations() {
 // Background sync helper to save new bookings to Supabase
 async function saveBookingToSupabase(booking) {
   const isTestingMode = window.parent && window.parent.location.href.includes('tests.html');
-  if (isTestingMode) {
-    return;
-  }
-  try {
-    const response = await fetch(`${CONFIG.supabaseUrl}/rest/v1/bookings`, {
-      method: 'POST',
-      headers: {
-        'apikey': CONFIG.supabaseKey,
-        'Authorization': `Bearer ${CONFIG.supabaseKey}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({
-        booth_id: booking.boothId,
-        booth_category: booking.boothCategory,
-        booth_dimensions: booking.boothDimensions,
-        contact_name: booking.name,
-        business_name: booking.business,
-        email: booking.email,
-        phone: booking.phone,
-        food_permit_required: booking.foodPermitRequired ? true : false,
-        permit_number: booking.permitNumber || null,
-        permit_expiry: booking.permitExpiry || null,
-        signed_copy_method: booking.signedCopyMethod,
-        signed_copy_submitted: booking.signedCopySubmitted ? true : false,
-        signed_copy_status: booking.signedCopyStatus,
-        signed_copy_files: booking.signedCopyFiles && booking.signedCopyFiles.length ? booking.signedCopyFiles.join(', ') : null,
-        price_paid: booking.pricePaid,
-        payment_mode: booking.payMode,
-        transaction_id: booking.transactionId
-      })
-    });
-    if (!response.ok) {
-      console.warn("Supabase insert responded with error status:", response.status);
-    } else {
-      console.log("Successfully logged booking to Supabase.");
-    }
-  } catch (err) {
-    console.error("Failed to save booking to Supabase:", err);
-  }
-}
-
-async function markPhysicalCopySubmitted(boothId) {
-  const booking = localReservations[boothId];
-  if (!booking) return;
-  const previousBooking = { ...booking };
-  booking.signedCopyMethod = 'physical';
-  booking.signedCopySubmitted = true;
-  booking.signedCopyStatus = 'physical_submitted';
-  localReservations[boothId] = booking;
-  localStorage.setItem('hai_booth_bookings', JSON.stringify(localReservations));
-  renderAdminTable(document.getElementById('admin-search-input') ? document.getElementById('admin-search-input').value : '');
-
-  const isTestingMode = window.parent && window.parent.location.href.includes('tests.html');
   if (isTestingMode) return;
-  try {
-    const response = await fetch(`${CONFIG.supabaseUrl}/rest/v1/bookings?booth_id=eq.${encodeURIComponent(boothId)}`, {
-      method: 'PATCH',
-      headers: {
-        'apikey': CONFIG.supabaseKey,
-        'Authorization': `Bearer ${CONFIG.supabaseKey}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({
-        signed_copy_method: 'physical',
-        signed_copy_submitted: true,
-        signed_copy_status: 'physical_submitted'
-      })
-    });
-    if (!response.ok) {
-      throw new Error(`Supabase update failed with status ${response.status}`);
-    }
-    alert(t('alert_signed_docs_marked'));
-  } catch (err) {
-    localReservations[boothId] = previousBooking;
-    localStorage.setItem('hai_booth_bookings', JSON.stringify(localReservations));
-    renderAdminTable(document.getElementById('admin-search-input') ? document.getElementById('admin-search-input').value : '');
-    console.error('Failed to mark physical signed copy as submitted:', err);
-    alert(t('alert_signed_docs_mark_failed'));
+
+  let uploadedSignedCopyPaths = [];
+  if (booking.signedCopyMethod === 'online' && booking._signedCopyFileObjects && booking._signedCopyFileObjects.length) {
+    uploadedSignedCopyPaths = await uploadSignedCopyFiles(booking.boothId, booking._signedCopyFileObjects);
+  }
+
+  const response = await fetch(`${CONFIG.supabaseUrl}/rest/v1/bookings`, {
+    method: 'POST',
+    headers: {
+      'apikey': CONFIG.supabaseKey,
+      'Authorization': `Bearer ${CONFIG.supabaseKey}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({
+      booth_id: booking.boothId,
+      booth_category: booking.boothCategory,
+      booth_dimensions: booking.boothDimensions,
+      contact_name: booking.name,
+      business_name: booking.business,
+      email: booking.email,
+      phone: booking.phone,
+      food_permit_required: booking.foodPermitRequired ? true : false,
+      permit_number: booking.permitNumber || null,
+      permit_expiry: booking.permitExpiry || null,
+      signed_copy_method: booking.signedCopyMethod,
+      signed_copy_submitted: booking.signedCopySubmitted ? true : false,
+      signed_copy_status: booking.signedCopyStatus,
+      signed_copy_files: uploadedSignedCopyPaths.length ? uploadedSignedCopyPaths.join(', ') : null,
+      price_paid: booking.pricePaid,
+      payment_mode: booking.payMode,
+      transaction_id: booking.transactionId
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Supabase insert responded with status ${response.status}`);
   }
 }
 
@@ -2025,9 +1973,6 @@ function validateForm() {
   const permitNumVal = elements.inputPermitNumber ? elements.inputPermitNumber.value.trim() : "";
   const permitExpiryVal = elements.inputPermitExpiry ? elements.inputPermitExpiry.value.trim() : "";
   const permitConfirmVal = elements.inputPermitConfirm ? elements.inputPermitConfirm.checked : false;
-  const docAppPdfConfirmed = elements.inputDocAppPdf ? elements.inputDocAppPdf.checked : false;
-  const docAppXlsxConfirmed = elements.inputDocAppXlsx ? elements.inputDocAppXlsx.checked : false;
-  const docRulesConfirmed = elements.inputDocRules ? elements.inputDocRules.checked : false;
   const signedOnline = elements.inputSignedCopyOnline ? elements.inputSignedCopyOnline.checked : false;
   const signedPhysical = elements.inputSignedCopyPhysical ? elements.inputSignedCopyPhysical.checked : false;
   const signedFilesCount = elements.inputSignedCopyFiles && elements.inputSignedCopyFiles.files ? elements.inputSignedCopyFiles.files.length : 0;
@@ -2053,15 +1998,6 @@ function validateForm() {
     errors.push(t('label_business').replace(' *', ''));
   }
 
-  if (!docAppPdfConfirmed) {
-    errors.push(t('error_doc_app_pdf_required'));
-  }
-  if (!docAppXlsxConfirmed) {
-    errors.push(t('error_doc_app_xlsx_required'));
-  }
-  if (!docRulesConfirmed) {
-    errors.push(t('error_doc_rules_required'));
-  }
 
   if (!signedOnline && !signedPhysical) {
     errors.push(t('error_signed_copy_method_required'));
@@ -2188,16 +2124,14 @@ function completeBooking(transactionId) {
     email: elements.inputEmail.value.trim(),
     phone: elements.inputPhone.value.trim(),
     business: elements.inputBusiness.value.trim(),
-    docsAgreement: {
-      appPdf: elements.inputDocAppPdf ? elements.inputDocAppPdf.checked : false,
-      appXlsx: elements.inputDocAppXlsx ? elements.inputDocAppXlsx.checked : false,
-      rules: elements.inputDocRules ? elements.inputDocRules.checked : false
-    },
     signedCopyMethod: elements.inputSignedCopyOnline && elements.inputSignedCopyOnline.checked ? 'online' : 'physical',
     signedCopySubmitted: elements.inputSignedCopyOnline && elements.inputSignedCopyOnline.checked,
     signedCopyStatus: elements.inputSignedCopyOnline && elements.inputSignedCopyOnline.checked ? 'online_submitted' : 'pending_physical',
     signedCopyFiles: elements.inputSignedCopyFiles && elements.inputSignedCopyFiles.files
       ? Array.from(elements.inputSignedCopyFiles.files).map(f => f.name)
+      : [],
+    _signedCopyFileObjects: elements.inputSignedCopyFiles && elements.inputSignedCopyFiles.files
+      ? Array.from(elements.inputSignedCopyFiles.files)
       : [],
     foodPermitRequired: categoryNeedsFoodPermit(selectedBooth.category),
     permitNumber: elements.inputPermitNumber ? elements.inputPermitNumber.value.trim() : "",
@@ -2259,7 +2193,7 @@ function completeBooking(transactionId) {
 }
 
 // --- ADMIN LOGBOOK RENDERER & BOOKKEEPING HELPERS (Option A) ---
-// TODO/Reminder: Migrate this to Supabase Auth (Option B) for production and remove query param key!
+// The current setup uses a client-side admin gate for the existing static deployment.
 function renderAdminTable(searchQuery = '') {
   const tbody = document.getElementById('admin-table-body');
   const emptyState = document.getElementById('admin-table-empty-state');

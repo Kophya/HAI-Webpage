@@ -498,6 +498,126 @@
         }
       },
       {
+        id: "booth-types-required-fields",
+        name: "Booth type required field coverage",
+        fn: async () => {
+          const { win, doc } = getApp();
+          const boothCases = [
+            { id: "4", category: "General", requiresPermit: false },
+            { id: "20", category: "Food", requiresPermit: true },
+            { id: "21", category: "Boba", requiresPermit: true },
+            { id: "30", category: "Fruits", requiresPermit: false }
+          ];
+
+          const requiredBoothIds = boothCases.map(b => b.id);
+          requiredBoothIds.forEach((boothId) => {
+            const rect = doc.querySelector(`rect.svg-booth[x="${win.CONFIG.booths.find(b => b.id === boothId).x}"]`);
+            assert(rect !== null, `Could not locate booth #${boothId} for coverage test`);
+          });
+
+          for (const boothCase of boothCases) {
+            win.localStorage.removeItem('hai_booth_bookings');
+            win.loadReservations();
+            win.renderMap();
+
+            const booth = win.CONFIG.booths.find(b => b.id === boothCase.id);
+            const rect = doc.querySelector(`rect.svg-booth[x="${booth.x}"]`);
+            rect.dispatchEvent(new MouseEvent('click'));
+
+            win.elements.inputName.value = "Coverage Tester";
+            win.elements.inputEmail.value = "coverage@test.com";
+            win.elements.inputPhone.value = "555-111-2222";
+            win.elements.inputBusiness.value = `Coverage ${boothCase.category}`;
+            if (boothCase.requiresPermit) {
+              win.elements.inputPermitNumber.value = "FH-TEST-123";
+              win.elements.inputPermitExpiry.value = "2027-12-31";
+              win.elements.inputPermitConfirm.checked = true;
+            }
+
+            // Required document acknowledgments
+            win.elements.inputDocAppPdf.checked = true;
+            win.elements.inputDocAppXlsx.checked = true;
+            win.elements.inputDocRules.checked = true;
+
+            // Online signed-copy path should require uploads
+            win.elements.inputSignedCopyOnline.checked = true;
+            win.elements.inputSignedCopyPhysical.checked = false;
+            win.elements.inputSignedCopyFiles.value = "";
+            win.elements.inputSignedCopyOnline.dispatchEvent(new Event('change'));
+            let validation = win.validateForm();
+            assert(validation.valid === false, `Online signed-copy path should require uploads for booth #${boothCase.id}`);
+            assert(validation.errors.some(e => e.includes("signed copy") || e.includes("upload")), `Online signed-copy validation should mention upload requirement for booth #${boothCase.id}`);
+
+            // Physical signed-copy path should clear the upload requirement and pass
+            win.elements.inputSignedCopyOnline.checked = false;
+            win.elements.inputSignedCopyPhysical.checked = true;
+            win.elements.inputSignedCopyOnline.dispatchEvent(new Event('change'));
+            win.elements.inputSignedCopyPhysical.dispatchEvent(new Event('change'));
+            validation = win.validateForm();
+            assert(validation.valid === true, `Physical signed-copy path should pass for booth #${boothCase.id}`);
+
+            // Ensure permit is enforced only for food/boba booths
+            if (boothCase.requiresPermit) {
+              assert(win.elements.inputPermitNumber.required === true, `Food/Boba booth #${boothCase.id} should require permit number`);
+              assert(win.elements.inputPermitExpiry.required === true, `Food/Boba booth #${boothCase.id} should require permit expiry`);
+              assert(win.elements.inputPermitConfirm.required === true, `Food/Boba booth #${boothCase.id} should require permit confirmation`);
+            } else {
+              assert(win.elements.inputPermitNumber.required === false, `Non-food booth #${boothCase.id} should not require permit number`);
+              assert(win.elements.inputPermitExpiry.required === false, `Non-food booth #${boothCase.id} should not require permit expiry`);
+              assert(win.elements.inputPermitConfirm.required === false, `Non-food booth #${boothCase.id} should not require permit confirmation`);
+            }
+          }
+        }
+      },
+      {
+        id: "dummy-reservation-flow",
+        name: "Dummy reservation flow",
+        fn: async () => {
+          const { win, doc } = getApp();
+
+          win.localStorage.removeItem('hai_booth_bookings');
+          win.loadReservations();
+          win.renderMap();
+
+          const booth = win.CONFIG.booths.find(b => b.id === "5");
+          assert(booth !== undefined, "Could not locate booth #5 for dummy booking test");
+          const rect = doc.querySelector(`rect.svg-booth[x="${booth.x}"]`);
+          assert(rect !== null, "Could not locate Booth 5 SVG rectangle");
+          rect.dispatchEvent(new MouseEvent('click'));
+
+          // Fill the real booking form with dummy data
+          win.elements.inputName.value = "Test Vendor";
+          win.elements.inputEmail.value = "vendor@test.com";
+          win.elements.inputPhone.value = "555-222-3333";
+          win.elements.inputBusiness.value = "Test Vendor LLC";
+          win.elements.inputDocAppPdf.checked = true;
+          win.elements.inputDocAppXlsx.checked = true;
+          win.elements.inputDocRules.checked = true;
+          win.elements.inputSignedCopyPhysical.checked = true;
+          win.elements.inputSignedCopyOnline.checked = false;
+          win.elements.inputSignedCopyPhysical.dispatchEvent(new Event('change'));
+
+          const validation = win.validateForm();
+          assert(validation.valid === true, `Dummy reservation form should be valid, got: ${validation.errors.join('; ')}`);
+
+          const bypassBtn = doc.getElementById('btn-test-bypass');
+          assert(bypassBtn !== null, "Could not find Skip Payment button in DOM");
+          bypassBtn.dispatchEvent(new MouseEvent('click'));
+
+          const receiptModal = doc.getElementById('modal-receipt');
+          assert(receiptModal.classList.contains('active'), "Receipt modal failed to open after dummy reservation");
+          assert(doc.getElementById('rec-business').textContent === "Test Vendor LLC", "Receipt did not map dummy business name correctly");
+          assert(doc.getElementById('rec-booth-id').textContent === "#5", "Receipt did not map dummy booth number correctly");
+          assert(doc.getElementById('rec-total-paid').textContent === "$350", "Receipt did not map dummy payment amount correctly");
+
+          const bookings = JSON.parse(win.localStorage.getItem('hai_booth_bookings'));
+          assert(bookings !== null, "Bookings failed to write to browser localStorage");
+          assert(bookings["5"] !== undefined, "Booth #5 dummy reservation was not saved");
+          assert(bookings["5"].name === "Test Vendor", "Dummy reservation contact name was not saved correctly");
+          assert(bookings["5"].business === "Test Vendor LLC", "Dummy reservation business name was not saved correctly");
+        }
+      },
+      {
         id: "mock-booking",
         name: "End-to-End Test booking process",
         fn: async () => {

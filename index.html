@@ -37,9 +37,6 @@
       <button class="btn-secondary" id="btn-language-toggle" title="Switch Language / Hloov Lus">
         🌐 English
       </button>
-      <button class="btn-secondary" id="btn-dev-portal" data-i18n="btn_dev_portal" title="Open Dev Portal Login">
-        🛠 Dev Portal
-      </button>
       <!-- Hidden Admin Panel Button (revealed only via secret URL query param) -->
       <button class="btn-secondary" id="btn-admin-dashboard" style="display: none; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); font-weight: 600;" title="Open Bookkeeping Reservation Logbook" data-i18n="btn_admin_dashboard">
         🔑 Admin Dashboard
@@ -50,7 +47,6 @@
       </button>
     </div>
   </header>
-
   <!-- MAIN CONTAINER -->
   <main class="app-container">
     
@@ -167,7 +163,7 @@
         <div class="payment-type-selector" id="payment-options-block">
           <span class="payment-type-label" data-i18n="label_payment_amount">Select Payment Amount</span>
           <div class="payment-options">
-            <div class="payment-option-btn selected" style="cursor: default; width: 100%;">
+            <div class="payment-option-btn payment-option-fullwidth selected" style="cursor: default; width: 100%;">
               <span class="payment-option-title" data-i18n="payment_option_full">Full Registration</span>
               <span class="payment-option-price" id="price-full">$0</span>
             </div>
@@ -220,37 +216,26 @@
 
           <div class="required-docs-block" id="required-docs-block">
             <p class="required-docs-title" data-i18n="docs_required_title">Required Vendor Papers</p>
-            <p class="required-docs-note" data-i18n="docs_required_note">Before reserving, review/fill these papers and confirm each item below.</p>
+            <p class="required-docs-note" data-i18n="docs_required_note">Before reserving, open each paper and sign online, or download them to sign in person.</p>
             <div class="required-doc-item">
               <a href="assets/2026_EventVendorApplication-re.pdf" target="_blank" rel="noopener noreferrer" data-i18n="doc_app_pdf_link">Open Vendor Application (PDF)</a>
-              <label>
-                <input type="checkbox" id="input-doc-app-pdf">
-                <span data-i18n="doc_app_pdf_confirm">I completed and agree to this paper.</span>
-              </label>
             </div>
             <div class="required-doc-item">
               <a href="assets/2026_EventVendorApplication-re.xlsx" target="_blank" rel="noopener noreferrer" data-i18n="doc_app_xlsx_link">Open Vendor Application (Excel)</a>
-              <label>
-                <input type="checkbox" id="input-doc-app-xlsx">
-                <span data-i18n="doc_app_xlsx_confirm">I completed and agree to this paper.</span>
-              </label>
             </div>
             <div class="required-doc-item">
               <a href="assets/2026_VendorRules.pdf" target="_blank" rel="noopener noreferrer" data-i18n="doc_rules_link">Open Vendor Rules (PDF)</a>
-              <label>
-                <input type="checkbox" id="input-doc-rules">
-                <span data-i18n="doc_rules_confirm">I read and agree to these rules.</span>
-              </label>
             </div>
+            <p class="required-docs-note" data-i18n="doc_inperson_note">If you want to deliver signed copies in person, download and bring the signed PDFs with you.</p>
           </div>
 
           <div class="signed-copy-block" id="signed-copy-block">
-            <p class="required-docs-title" data-i18n="signed_copy_title">Signed Copy Submission *</p>
-            <p class="required-docs-note" data-i18n="signed_copy_note">Choose how you will submit signed papers. Online upload is optional if you will submit physical copies.</p>
+            <p class="required-docs-title" data-i18n="signed_copy_title">Signed Document Submission *</p>
+            <p class="required-docs-note" data-i18n="signed_copy_note">Choose whether you will submit signed documents online or deliver them in person.</p>
             <div class="required-doc-item">
               <label>
                 <input type="radio" name="signed-copy-method" id="input-signed-copy-online" value="online">
-                <span data-i18n="signed_copy_option_online">I am submitting signed copies online now.</span>
+                <span data-i18n="signed_copy_option_online">I will submit signed documents online.</span>
               </label>
               <div class="form-group" id="signed-copy-upload-group" style="display: none;">
                 <label for="input-signed-copy-files" data-i18n="label_signed_copy_upload">Upload Signed Copies *</label>
@@ -260,7 +245,7 @@
             <div class="required-doc-item">
               <label>
                 <input type="radio" name="signed-copy-method" id="input-signed-copy-physical" value="physical">
-                <span data-i18n="signed_copy_option_physical">I will submit physical signed copies in person.</span>
+                <span data-i18n="signed_copy_option_physical">I will deliver signed documents in person.</span>
               </label>
             </div>
           </div>
@@ -540,12 +525,12 @@
   <!-- DEV PORTAL ACCESS MODAL -->
   <div class="modal-overlay" id="modal-dev-portal">
     <div class="dev-portal-modal">
-      <div class="lookup-header">
+      <div class="lookup-header dev-login-header">
         <div class="lookup-header-title">
-          <span class="lookup-icon">🛠</span>
+          <span class="lookup-icon dev-login-icon">🔒</span>
           <div>
-            <h3 data-i18n="dev_portal_title">Dev Portal Login</h3>
-            <p data-i18n="dev_portal_subtitle">Enter admin email and password to continue.</p>
+          <h3 data-i18n="dev_portal_title">Admin Login</h3>
+          <p data-i18n="dev_portal_subtitle">Authorized access only.</p>
           </div>
         </div>
         <button class="lookup-btn-close-x" id="btn-dev-portal-close-x">&times;</button>
@@ -562,18 +547,18 @@
             <input type="password" id="input-dev-portal-password" class="form-control" data-i18n-placeholder="dev_portal_placeholder_password" placeholder="Enter password" required>
           </div>
           <button class="btn-primary" id="btn-dev-portal-submit" type="submit" style="width: 100%; padding: 12px; font-weight: 700;" data-i18n="dev_portal_btn_login">
-            Continue to Dev Portal
+            Sign In
           </button>
           <button class="test-bypass-btn" id="btn-dev-portal-skip" type="button" data-i18n="dev_portal_btn_skip">
-            ⚡ Skip Login (Test Mode)
+            ⚡ Skip Login
           </button>
         </form>
 
         <div id="dev-portal-error" class="lookup-alert-error" style="display:none; background: #fef2f2; border: 1px solid #ef4444; color: #991b1b; padding: 14px; border-radius: var(--border-radius-md); font-size: 0.85rem; line-height: 1.4; margin-top: 12px;"></div>
 
         <div id="dev-portal-non-admin" class="dev-portal-note" style="display:none;">
-          <strong data-i18n="dev_portal_non_admin_title">Not an admin?</strong>
-          <p data-i18n="dev_portal_non_admin_hint">If you're not an admin, try Look Up Reservation to check your booking or pay a remaining balance.</p>
+          <strong data-i18n="dev_portal_non_admin_title">Access limited</strong>
+          <p data-i18n="dev_portal_non_admin_hint">If you need to review a booking, use Look Up Reservation.</p>
           <div class="dev-portal-note-actions">
             <button type="button" class="btn-secondary" id="btn-dev-portal-lookup" data-i18n="dev_portal_btn_lookup">Look Up Reservation</button>
             <button type="button" class="btn-secondary" id="btn-dev-portal-continue" data-i18n="dev_portal_btn_continue">Continue Anyway</button>
@@ -747,6 +732,12 @@
     <strong id="tip-title">#--</strong>
     <span id="tip-desc">Category</span>
     <span id="tip-price" style="font-weight: 600; color: #a855f7;">$0.00</span>
+  </div>
+
+  <div class="footer-admin-link">
+    <button class="dev-portal-footer" id="btn-dev-portal" data-i18n="btn_dev_portal" title="Admin login">
+      🔒 Admin Login
+    </button>
   </div>
 
   <!-- PayPal JavaScript SDK (v5) -->

@@ -20,5 +20,5 @@ if (-not $pythonExe) {
   throw "Python not found. Run scripts\setup.ps1 first."
 }
 
-Write-Host "Serving HAI-Webpage on http://localhost:$Port"
+Write-Host "Serving the app on http://localhost:$Port"
 & $pythonExe -m http.server $Port
