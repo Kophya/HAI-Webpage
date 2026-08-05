@@ -637,6 +637,7 @@ const elements = {
   btnPayDeposit: document.getElementById('btn-pay-deposit'),
   btnPayFull: document.getElementById('btn-pay-full'),
   btnTestBypass: document.getElementById('btn-test-bypass'),
+  btnDownloadDocs: document.getElementById('btn-download-docs'),
   btnResetCache: document.getElementById('btn-reset-cache'),
   formBooking: document.getElementById('form-booking'),
   
@@ -1572,6 +1573,39 @@ function setupEventListeners() {
     });
   }
 
+  if (elements.btnDownloadDocs) {
+    elements.btnDownloadDocs.addEventListener('click', async () => {
+      if (typeof JSZip === 'undefined') {
+        alert('Download support is unavailable right now.');
+        return;
+      }
+
+      const files = [
+        { path: 'Assets/2026_EventVendorApplication-re.pdf', name: '2026_EventVendorApplication-re.pdf' },
+        { path: 'Assets/2026_VendorRules.pdf', name: '2026_VendorRules.pdf' }
+      ];
+
+      const zip = new JSZip();
+      for (const file of files) {
+        const response = await fetch(file.path);
+        if (!response.ok) {
+          throw new Error(`Failed to load ${file.name}`);
+        }
+        zip.file(file.name, await response.blob());
+      }
+
+      const content = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(content);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'reservation-documents.zip';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    });
+  }
+
   // --- RESERVATION LOOKUP EVENTS ---
   const linkLookup = document.getElementById('link-lookup-booking');
   const modalLookup = document.getElementById('modal-lookup');
@@ -2399,5 +2433,4 @@ Object.defineProperty(window, 'selectedBalancePaymentMethod', {
   configurable: true,
   enumerable: true
 });
-
 
