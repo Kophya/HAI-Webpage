@@ -812,16 +812,7 @@ async function saveBookingToSupabase(booking) {
   }
 }
 
-// Reset cache helper
-elements.btnResetCache.addEventListener('click', () => {
-  if (confirm("Are you sure you want to reset all booking testing mock status? This clears all simulated bookings.")) {
-    localStorage.removeItem('hai_booth_bookings');
-    loadReservations();
-    selectedBooth = null;
-    updateCheckoutPanel();
-    renderMap();
-  }
-});
+// Reset cache helper - registered inside setupEventListeners() to ensure DOM is ready
 
 // --- RENDER LAYOUT ENGINE ---
 function renderMap() {
@@ -1265,6 +1256,19 @@ function setupEventListeners() {
     btnLang.addEventListener('click', () => {
       const nextLang = currentLang === 'en' ? 'hm' : 'en';
       setLanguage(nextLang);
+    });
+  }
+
+  // Reset Map cache
+  if (elements.btnResetCache) {
+    elements.btnResetCache.addEventListener('click', () => {
+      if (confirm("Are you sure you want to reset all booking testing mock status? This clears all simulated bookings.")) {
+        localStorage.removeItem('hai_booth_bookings');
+        loadReservations();
+        selectedBooth = null;
+        updateCheckoutPanel();
+        renderMap();
+      }
     });
   }
 
