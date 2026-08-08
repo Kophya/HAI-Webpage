@@ -83,6 +83,9 @@ header {
   display: flex;
   align-items: center;
   gap: 16px;
+  min-width: 0;
+  flex-shrink: 1;
+  overflow: hidden;
 }
 
 /* Logo Placeholder - Vibrant branding */
@@ -105,16 +108,34 @@ header {
   font-weight: 800;
   letter-spacing: -0.025em;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brand-text {
+  min-width: 0;
+  overflow: hidden;
 }
 
 .brand-text p {
   font-size: 0.85rem;
   color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brand {
+  min-width: 0;
+  flex-shrink: 1;
+  overflow: hidden;
 }
 
 .header-actions {
   display: flex;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .btn-secondary {
